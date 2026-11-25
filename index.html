@@ -325,6 +325,9 @@ const PICKS=[['Pioche en bois',2,{bois:3},5,40,0],['Pioche en pierre',4,{pierre:
 const TOOLS=[['Outils de base',1,{},0],['Outils en fer',1.3,{fer:20},300],['Outils en cuivre',1.7,{fer:10,cuivre:25},2000],['Outils en argent',2.2,{argent:25},15000],['Outils en or',3,{or:25},80000],['Outils en diamant',4.5,{diamant:15},400000],['Outils en météorite',7,{meteorite:10},8000000]];
 const SECS=[['Mains nues',0,{},0],['Sécateur en fer',.3,{fer:10},150],['Sécateur en argent',.7,{argent:15},8000],['Sécateur en diamant',1.5,{diamant:10},250000],['Sécateur en jade',2.5,{jade:8},900000]];
 const LAMPS=[['Torche',0,{},20,-1,0]],LANTS=LAMPS;
+const AXES=[['Hache en bois',2,{bois:5},10,40,0],['Hache en pierre',3,{pierre:8,bois:3},40,80,0],['Hache en fer',4,{fer:8,bois:3},350,180,1],['Hache en diamant',6,{diamant:4,fer:4},120000,1000,4]];
+const DROPM=[1,1.5,2,3],AXEM=[1,1.5,2,3],RODV=[1,1.3,1.7,2.3],KEEPG={pick:1,axe:1,rod:1};
+const rodVal=()=>{const i=gi('rod');return i>=0?RODV[i]:1};
 const KINDS={
  Pommier:{t:'tree',leaf:0x2f7a34,leaf2:0x46993f,fruit:0xe2384a,cap:8,regen:.15},
  Cerisier:{t:'tree',leaf:0xe98fb0,leaf2:0xf7b6cf,fruit:0xb3122e,cap:10,regen:.2},
@@ -663,7 +666,7 @@ function cands(){const L=[],m=MP;
  m.PARCELS.forEach(p=>{if(!owned(p))return;const n=treesOf(p),N=nSrc(p);if(n>=N)return;const q=genSources(p)[n],[c,mt]=treeCost(p,n);L.push({x:q.x,y:q.y,o:'tree'+p.id,label:'Planter un '+p.kind.toLowerCase()+' ici ('+(n+1)+'/'+N+') · '+usd(c)+' + '+matTxt(mt),ok:S.E>=c&&hasMat(mt),act:()=>plantTree(p)})});
  if(nearWater())L.push({x:S.px,y:S.py,o:'fish',label:gi('rod')<0?'Il te faut une canne à pêche (forge du Bricolo)':'Pêcher ('+gearName('rod')+')',ok:gi('rod')>=0,act:startFish});
  m.CAVES.forEach(c=>{const lk=c.tier>tierOf();L.push({x:c.ex,y:c.ey,o:c,label:lk?c.name+' : échelon « '+TIERS[c.tier][0]+' » requis':'Entrer dans : '+c.name+' ('+c.depth+' niveaux)',ok:!lk,act:()=>enterMine(c,1)})});
- m.WOOD.forEach(([wx,wy],i)=>{const id=m.id+'_w'+i,st=S.wood[id]??8,amt=Math.min(Math.floor(st),2+S.tools*2,invRoom('bois'));L.push({x:wx*T,y:wy*T,o:id,label:invRoom('bois')<1?'Sac plein : vends ou agrandis ton sac':amt<1?'Tas de bois : ça repousse…':'Couper du bois (+'+amt+')',ok:amt>=1,act:()=>{S.wood[id]=st-amt;S.ore.bois=ore('bois')+amt;pop(wx*T,wy*T,'+'+amt+' bois','#d8b080',8,'#a0703a');sfx('mine')}})});
+ m.WOOD.forEach(([wx,wy],i)=>{const id=m.id+'_w'+i,st=S.wood[id]??8,ai=gi('axe'),take=Math.min(Math.floor(st),ai>=0?AXES[ai][1]:1),amt=Math.min(Math.round(take*(ai>=0?AXEM[ai]:1)),invRoom('bois'));L.push({x:wx*T,y:wy*T,o:id,label:invRoom('bois')<1?'Sac plein : vends ou agrandis ton sac':take<1?'Tas de bois : ça repousse…':'Couper du bois (+'+amt+(ai>=0?' · '+gearName('axe'):S.gear.axe&&S.gear.axe.d===0?' · hache cassée, à mains nues':' · à mains nues, fabrique une hache à la forge')+')',ok:amt>=1&&take>=1,act:()=>{S.wood[id]=st-take;S.ore.bois=ore('bois')+amt;if(ai>=0)wear('axe',1);SWING=.4;LASTSW=Date.now();pop(wx*T,wy*T,'+'+amt+' bois','#d8b080',8,'#a0703a');sfx('mine')}})});
  L.push({x:m.MERCH.x*T,y:m.MERCH.y*T+30,o:'merch',label:'Échanger avec '+m.MERCH.name,ok:true,act:openTrade});
  S.orders.forEach(o=>{if(o.map!==m.id||o.tk)return;L.push({x:o.x,y:o.y,o,label:S.crate>=o.L?'Livrer la commande : '+o.who+' ('+fmt(o.L)+' L)':'Commande « '+o.who+' » : il te faut '+fmt(o.L)+' L (tu en portes '+fmt(S.crate)+')',ok:S.crate>=o.L,act:()=>deliverOrder(o)})});
  return L}
@@ -790,7 +793,7 @@ function chestClick(b){const C=chest();if(b.dataset.chu){const nx=CHL[C.lv+1];if
  else if(b.dataset.chw){const k=b.dataset.chw,have=C.o[k]||0,n=addInv(k,Math.min(b.dataset.n==='all'?have:1,have));if(n<1)return;C.o[k]-=n;if(C.o[k]<=0)delete C.o[k];sfx('pick')}
  openChest();save(true)}
 /* ---- poissonnerie du port ---- */
-const FSTAND={x:98.6*T,y:17.4*T};const fishPrice=k=>Math.round(MATN[k][3]*1.5*(1+tierOf()*.1));
+const FSTAND={x:98.6*T,y:17.4*T};const fishPrice=k=>Math.round(MATN[k][3]*1.5*(1+tierOf()*.1)*rodVal());
 function makeFishStand(){const g=new THREE.Group();g.add(box(tmat(0x8a5a3a),2.6,.9,1,0,.45,0));g.add(box(tmat(0xe8f4f8),2.5,.06,.9,0,.92,0));
  [[-1],[1]].forEach(([o])=>g.add(box(tmat(0x6a4a2a),.1,2.2,.1,o*1.2,1.1,-.45)));for(let i=0;i<5;i++)g.add(box(tmat(i%2?0x2f7ab0:0xffffff),.56,.08,1.4,-1.12+i*.56,2.22,-.1));
  const fc=[0xa8c0d0,0x5a8aa0,0xd8a0a0,0x8ab0c0,0xc04a4a];for(let i=0;i<5;i++)g.add(mesh(G.sph,tmat(fc[i]),.22,.07,.09,-.9+i*.45,1,.1));
@@ -798,13 +801,14 @@ function makeFishStand(){const g=new THREE.Group();g.add(box(tmat(0x8a5a3a),2.6,
  const sg=new THREE.Mesh(new THREE.PlaneGeometry(2.2,.55),new THREE.MeshBasicMaterial({map:tx,side:THREE.DoubleSide}));sg.position.set(0,2.55,.3);g.add(sg);
  const p=makePerson({shirt:0x2f557a,pants:0x3a3a3a,skin:0xe8b48a,hair:0x4a3020,style:'short',beard:1,apron:1,hat:'cap',hatCol:0x2f557a});p.position.set(0,0,-.9);g.add(p);
  g.position.set(U(FSTAND.x),0,U(FSTAND.y));g.rotation.y=Math.PI/2;return g}
-function openFishStand(){const fs=FISHK.filter(k=>ore(k)>=1),tot=fs.reduce((a,k)=>a+Math.floor(ore(k))*fishPrice(k),0);$('travelT').textContent='Poissonnerie du port';$('travelInfo').textContent='Le poissonnier rachète tes poissons 50 % plus cher que les marchands.';
+function openFishStand(){const fs=FISHK.filter(k=>ore(k)>=1),tot=fs.reduce((a,k)=>a+Math.floor(ore(k))*fishPrice(k),0);$('travelT').textContent='Poissonnerie du port';$('travelInfo').textContent='Le poissonnier rachète tes poissons 50 % plus cher que les marchands'+(rodVal()>1?' · bonus canne ×'+String(rodVal()).replace('.',','):'')+'. Plus ta canne est bonne, plus tes poissons valent cher.';
  $('travelList').innerHTML=(fs.length?`<div class="row"><button class="btn sm" data-fsa="1">Tout vendre · ${usd(tot)}</button></div>`+fs.map(k=>{const n=Math.floor(ore(k));return `<div class="tr"><span><b>${MATN[k][1]}</b> · ${n} · ${usd(fishPrice(k))} pièce</span><button class="btn ghost sm" data-fs="${k}" data-n="1">Vendre 1</button><button class="btn ghost sm" data-fs="${k}" data-n="all">Tout (${usd(n*fishPrice(k))})</button></div>`}).join(''):'<p>Tu n’as pas de poisson. Va pêcher au bout du ponton !</p>');$('travel').style.display='grid'}
 function fishClick(b){const sell=(k,n)=>{n=Math.min(n,Math.floor(ore(k)));if(n<1)return 0;S.ore[k]-=n;const g=n*fishPrice(k);S.E+=g;return g};let g=0;if(b.dataset.fsa)FISHK.forEach(k=>g+=sell(k,Math.floor(ore(k))));else g=sell(b.dataset.fs,b.dataset.n==='all'?1e9:1);if(g){sfx('coin');pop(S.px,S.py-30,'+'+usd(g),'#f6d77c',10,'#f6d77c')}openFishStand();save(true)}
 function mineCands(){if(MINE.house)return houseCands();const L=[],lv=MINE.lv,W=lv.W;
  lv.mons.forEach(mo=>{if(mo.hp<=0)return;if(MONS[mo.ty]&&MONS[mo.ty].fly)return;const k=Math.ceil(mo.hp/meleeDmg());L.push({x:mo.x,y:mo.y,o:mo,label:'Combattre : '+mo.n+' ('+k+' coup'+(k>1?'s':'')+')',ok:true,act:()=>{SWING=.4;LASTSW=Date.now();hitMon(mo,meleeDmg());if(held()==='sword'&&gi('sword')>=0)wear('sword',1)}})});
- lv.nodes.forEach(n=>{if(n.hp<=0)return;const nm=MATN[n.ty][1],full=invRoom(n.ty)<1;L.push({x:n.x,y:n.y,o:n,label:full?'Sac plein ! ('+nm+')':'Miner : '+nm+' ('+Math.ceil(n.hp/pickF())+' coup'+(n.hp>pickF()?'s':'')+(held()==='pick'&&gi('pick')>=0?' · '+gearName('pick'):gi('pick')<0?' · à mains nues : fabrique une pioche à la forge':' · à mains nues : prends ta pioche')+')',ok:!full,act:()=>{SWING=.4;LASTSW=Date.now();n.hp-=pickF();if(held()==='pick'&&gi('pick')>=0)wear('pick',1);sfx('mine');pop(n.x,n.y,'Tac !','#e8f0f8',6,MATN[n.ty][2]);if(n.mesh)n.mesh.rotation.y+=.4;
-  if(n.hp<=0){const got=addInv(n.ty,n.amt);pop(n.x,n.y,'+'+got+' '+nm.toLowerCase(),MATN[n.ty][2],16,MATN[n.ty][2]);if(n.mesh)n.mesh.visible=false}}})});
+ lv.nodes.forEach(n=>{if(n.hp<=0)return;const nm=MATN[n.ty][1],full=invRoom(n.ty)<1,pi=gi('pick'),can=held()==='pick'&&pi>=0,brk=S.gear.pick&&S.gear.pick.d===0;
+  L.push({x:n.x,y:n.y,o:n,label:full?'Sac plein ! ('+nm+')':!can?nm+' : '+(brk?'ta pioche est cassée, répare-la à la forge':pi<0?'il te faut une pioche (forge du Bricolo)':'prends ta pioche pour miner'):'Miner : '+nm+' ('+Math.ceil(n.hp/PICKS[pi][1])+' coup'+(n.hp>PICKS[pi][1]?'s':'')+' · '+gearName('pick')+' · butin ×'+String(DROPM[pi]).replace('.',',')+')',ok:!full&&can,act:()=>{const pi=gi('pick');if(held()!=='pick'||pi<0)return;SWING=.4;LASTSW=Date.now();n.hp-=PICKS[pi][1];wear('pick',1);sfx('mine');pop(n.x,n.y,'Tac !','#e8f0f8',6,MATN[n.ty][2]);if(n.mesh)n.mesh.rotation.y+=.4;
+  if(n.hp<=0){const got=addInv(n.ty,Math.max(1,Math.round(n.amt*DROPM[pi])));pop(n.x,n.y,'+'+got+' '+nm.toLowerCase(),MATN[n.ty][2],16,MATN[n.ty][2]);if(n.mesh)n.mesh.visible=false}}})});
  const e=lv.entry;L.push({x:(e%W+.5)*T,y:(Math.floor(e/W)+.5)*T,o:'up',label:MINE.depth===1?'Sortir de la grotte':'Remonter au niveau '+(MINE.depth-1),ok:true,act:()=>MINE.depth===1?exitMine():enterMine(MINE.cave,MINE.depth-1)});
  if(lv.down!=null){const d=lv.down;L.push({x:(d%W+.5)*T,y:(Math.floor(d/W)+.5)*T,o:'down',label:'Descendre au niveau '+(MINE.depth+1),ok:true,act:()=>enterMine(MINE.cave,MINE.depth+1)})}
  
@@ -887,7 +891,7 @@ function renderShop(){const t=tierOf(),ft=freeTiles();let h='';
  else if(tab==='s'){h='<p>12 catégories de graines, de celle qui rapporte le moins à celle qui rapporte le plus.</p><div class="card">'+SEEDS.map((s,i)=>`<div class="seedrow"><span>${i+1}</span><span>${s[0]}</span><span>×${String(s[1]).replace('.',',')} fruits</span></div>`).join('')+'</div>';
   ALLPARCELS.filter(owned).forEach(p=>{const L=S.seed[p.id]||0,nx=SEEDS[L+1];h+=`<div class="card"><b>${p.name}</b> · ${MAPS[p.map].name}<br><small>Actuel : ${SEEDS[L][0]} (×${String(SEEDS[L][1]).replace('.',',')})</small><div class="row">`+(nx?`<button class="btn ghost sm" data-se="${p.id}" ${seedTier(L+1)>t||S.E<seedCost(p,L+1)?'disabled':''}>${seedTier(L+1)>t?nx[0]+' : échelon « '+TIERS[seedTier(L+1)][0]+' »':'Planter : '+nx[0]+' (×'+String(nx[1]).replace('.',',')+') · '+usd(seedCost(p,L+1))}</button>`:'<small>Meilleure graine plantée</small>')+'</div></div>'})}
  else{h=`<p>Tes matériaux : ${MATS.filter(m=>ore(m[0])>0).map(m=>m[1]+' '+fmt(ore(m[0]))).join(' · ')||'aucun'}. Mine dans les grottes et coupe du bois.</p>`;
-  h+='<h3>Fabriquer (outils et armes qui s’usent)</h3>';Object.keys(GEAR).forEach(k=>{const G0=GEAR[k],g=S.gear[k],i=gi(k),cur=i>=0?G0.L[i]:null;
+  h+='<h3>Fabriquer (outils et armes qui s’usent)</h3>';Object.keys(GEAR).forEach(k=>{const G0=GEAR[k],g=S.gear[k],i=g&&g.d>=0?g.i:gi(k),cur=i>=0?G0.L[i]:null;
    h+=`<div class="card"><b>${G0.n}</b> · ${cur?cur[0]+(G0.st?' ('+G0.st+' '+cur[1]+')':'')+' · '+(g&&g.d>=0?Math.ceil(g.d)+'/'+cur[4]+' '+G0.u:'à vie'):'aucune'}`+(cur&&g&&g.d>=0?`<div class="meter"><i style="width:${Math.max(2,Math.round(g.d/cur[4]*100))}%"></i></div>`:'')+(()=>{const r=repCost(k);if(!r||r.full)return'';return `<div class="row"><button class="btn sm${canPay(r.c)?'':' dim'}" data-rp="${k}">&#128295; Réparer à 100 % · ${costTxt(r.c)}</button></div>`})()+'<div class="row">';
    G0.L.forEach((c,j)=>{if(k==='lamp'&&gi('lamp')>=0)return;if(c[5]>t+1)return;const lk=c[5]>t;h+=`<button class="btn ghost sm" data-cr="${k}" data-j="${j}" ${lk||!canPay(c)?'disabled':''}>${lk?c[0]+' : échelon « '+TIERS[c[5]][0]+' »':(k==='lamp'?'Acheter':'Fabriquer')+' : '+c[0]+' ('+(G0.st?G0.st+' '+c[1]+', ':'')+(c[4]<0?'à vie':c[4]+' '+G0.u)+') · '+costTxt(c)}</button>`});h+='</div></div>'});
   h+=`<div class="card"><b>Flèches</b> · tu en as ${S.items.fleche||0}<div class="row"><button class="btn ghost sm${canPay([0,0,{bois:3,pierre:2},10])?'':' dim'}" data-ar="1">Fabriquer 10 flèches · 10 $ + 3 bois + 2 pierre</button></div></div><h3>Améliorations permanentes</h3>`;
@@ -931,7 +935,7 @@ let rtab='s';
 function openTrade(){$('tradeT').textContent=MP.MERCH.name;renderTrade();$('trade').style.display='grid'}
 $('tradeClose').onclick=()=>$('trade').style.display='none';
 $('tradeTabs').onclick=e=>{const b=e.target.closest('[data-r]');if(!b)return;rtab=b.dataset.r;document.querySelectorAll('#tradeTabs button').forEach(x=>x.classList.toggle('on',x===b));renderTrade()};
-const sellPrice=k=>Math.round(MATN[k][3]*(MP.MERCH.fac[k]||1)*(1+tierOf()*.1));
+const sellPrice=k=>Math.round(MATN[k][3]*(MP.MERCH.fac[k]||1)*(1+tierOf()*.1)*(FISHK.includes(k)?rodVal():1));
 const itemPrice=k=>Math.round(ITN[k][3]*(1+tierOf()*.6));
 const BARTER=[['pierre',20,'fer',2],['fer',15,'cuivre',6],['cuivre',20,'argent',3],['argent',12,'or',2],['or',10,'diamant',1],['relique',3,'or',8],['jade',2,'diamant',3],['meteorite',1,'diamant',6]];
 function renderTrade(){$('tradeInfo').textContent='Tu as '+usd(S.E)+'.'+(Object.keys(MP.MERCH.fac).length?' Ici, '+Object.keys(MP.MERCH.fac).map(k=>MATN[k][1].toLowerCase()).join(' et ')+' se vendent plus cher !':'');let h='';
@@ -1050,7 +1054,7 @@ function update(dt){
 function lightCalc(){const h=hourOf();let d=0;if(h>=20.5||h<5)d=1;else if(h>=17.5)d=(h-17.5)/3;else if(h<7)d=(7-h)/2;if(MP.theme==='space')d=Math.max(d,.55);dark=d;dusk=MP.theme==='space'?0:h>=17&&h<20.5?Math.sin((h-17)/3.5*Math.PI):h>=5&&h<7.5?Math.sin((h-5)/2.5*Math.PI)*.6:0}
 let hudT=0;
 function hud(dt){hudT-=dt;if(hudT>0)return;hudT=.1;const t=tierOf(),h=hourOf();
- $('hE').textContent=fmt(S.E);$('pE').style.color=S.E<0?'#ff8fa8':'';$('hRep').textContent=S.rep.toFixed(1).replace('.',',');$('hB').textContent=S.bag+'/'+S.bagCap;$('hC').textContent=fmt(S.crate)+'/'+fmt(S.crateCap);$('hS').textContent=fmt(S.stock);$('hR').textContent=fmt(S.shelf)+'/'+fmt(S.shelfCap);
+ $('hE').textContent=fmt(S.E);$('pE').style.color=S.E<0?'#ff8fa8':'';$('hRep').textContent=S.rep.toFixed(1).replace('.',',');$('hB').textContent=S.bag+'/'+S.bagCap;$('hC').textContent=fmt(S.crate)+'/'+fmt(S.crateCap);$('hB').parentNode.style.display=S.bag>0?'':'none';$('hC').parentNode.style.display=S.crate>0?'':'none';$('hS').textContent=fmt(S.stock);$('hR').textContent=fmt(S.shelf)+'/'+fmt(S.shelfCap);
  $('hW').textContent=MINE?(MINE.house?'Au chaud':'Torche'):wxName();$('hM').textContent=MINE?(MINE.house?'Ta maison':MINE.cave.name+' · niveau '+MINE.depth):MP.name;
  $('hT').textContent=String(Math.floor(h)).padStart(2,'0')+':'+String(Math.floor(h%1*6)*10).padStart(2,'0');$('hD').textContent='Jour '+S.day;
  const nx=RANKS[S.rank+1],rk=RANKS[S.rank];
@@ -1666,11 +1670,11 @@ $('act').onclick=act;
 const SWORDS=[['Épée en bois',3,{bois:8},40,40,0],['Épée en pierre',5,{pierre:10,bois:2},120,70,0],['Épée en fer',9,{fer:10,bois:2},400,140,1],['Épée en diamant',40,{diamant:8,fer:4},200000,900,4]];
 const BOWS=[['Arc en bois',4,{bois:12},120,60,0],['Arc en pierre',7,{bois:8,pierre:10},400,100,0],['Arc en fer',12,{bois:8,fer:10},1500,180,1],['Arc en diamant',45,{diamant:6,fer:6},300000,800,4]];
 const RODS=[['Canne en bois',1,{bois:6},30,40,0],['Canne en pierre',2,{bois:4,pierre:8},150,80,0],['Canne en fer',3,{bois:4,fer:8},800,200,1],['Canne en diamant',4,{diamant:3,fer:4},80000,600,4]];
-const GEAR={pick:{n:'Pioche',L:PICKS,u:'coups',st:'force'},lamp:{n:'Torche',L:LAMPS,u:'',st:''},sword:{n:'Épée',L:SWORDS,u:'coups',st:'dégâts'},bow:{n:'Arc',L:BOWS,u:'tirs',st:'dégâts'},rod:{n:'Canne à pêche',L:RODS,u:'lancers',st:'niveau'}};
+const GEAR={pick:{n:'Pioche',L:PICKS,u:'coups',st:'force'},lamp:{n:'Torche',L:LAMPS,u:'',st:''},sword:{n:'Épée',L:SWORDS,u:'coups',st:'dégâts'},bow:{n:'Arc',L:BOWS,u:'tirs',st:'dégâts'},rod:{n:'Canne à pêche',L:RODS,u:'lancers',st:'niveau'},axe:{n:'Hache',L:AXES,u:'coups',st:'coupe'}};
 const gi=k=>{const g=S.gear&&S.gear[k];return g&&(g.d<0||g.d>0)?g.i:-1};
-const gearName=k=>{const i=gi(k);return i<0?'aucune':GEAR[k].L[i][0]};
-function repCost(k){const g=S.gear&&S.gear[k],i=gi(k);if(!g||g.d<0||i<0)return null;const c=GEAR[k].L[i],f=1-g.d/c[4],m={};Object.keys(c[2]).forEach(a=>{const v=Math.ceil(c[2][a]*.4*f);if(v>0)m[a]=v});return{ok:g.d<c[4],full:g.d>=c[4],c:[0,0,m,Math.max(1,Math.round(c[3]*.4*f))]}}
-function wear(k,n){const g=S.gear&&S.gear[k];if(!g||g.d<0)return;g.d-=n;if(g.d<=0){const nm=GEAR[k].L[g.i][0];delete S.gear[k];banner(nm+' cassée !','Fabriques-en une autre à la forge');sfx('sad')}}
+const gearName=k=>{const g=S.gear&&S.gear[k];if(g&&g.d===0&&GEAR[k].L[g.i])return GEAR[k].L[g.i][0]+' (cassée)';const i=gi(k);return i<0?'aucune':GEAR[k].L[i][0]};
+function repCost(k){const g=S.gear&&S.gear[k],i=g&&g.d>=0?g.i:gi(k);if(!g||g.d<0||i<0)return null;const c=GEAR[k].L[i],f=1-g.d/c[4],m={};Object.keys(c[2]).forEach(a=>{const v=Math.ceil(c[2][a]*.4*f);if(v>0)m[a]=v});return{ok:g.d<c[4],full:g.d>=c[4],c:[0,0,m,Math.max(1,Math.round(c[3]*.4*f))]}}
+function wear(k,n){const g=S.gear&&S.gear[k];if(!g||g.d<0)return;g.d-=n;if(g.d<=0&&KEEPG[k]){g.d=0;banner(GEAR[k].L[g.i][0]+' cassée !','Répare-la à la forge du Bricolo');sfx('sad');return}if(g.d<=0){const nm=GEAR[k].L[g.i][0];delete S.gear[k];banner(nm+' cassée !','Fabriques-en une autre à la forge');sfx('sad')}}
 const pickF=()=>held()==='pick'&&gi('pick')>=0?PICKS[gi('pick')][1]:1;
 const meleeDmg=()=>{const i=held()==='sword'?gi('sword'):-1;return i<0?S.shoo:SWORDS[i][1]*(S.shoo>1?1.25:1)};
 function lampLeft(){const i=gi('lamp');if(i<0)return 0;const g=S.gear.lamp;return g.d<0?Infinity:g.d}
@@ -1857,7 +1861,7 @@ function updateSea(dt){if(HOME.group&&!HOME.fstand){HOME.fstand=makeFishStand();
   const g=o.g;g.position.set(U(o.x),o.k==='kraken'?-.1+Math.sin(tt*1.5)*.08:Math.sin(tt*2+o.x)*.06,U(o.y));g.rotation.y=-o.a;g.scale.setScalar(o.hitT>0?1.12:1);
   if(g.userData.tail)g.userData.tail.rotation.y=Math.sin(tt*8)*.5;if(g.userData.seg)g.userData.seg.forEach((m,i)=>m.position.y=.15+Math.sin(tt*4-i*.8)*.25);if(g.userData.ten)g.userData.ten.forEach((tn,i)=>{tn.rotation.x=Math.sin(tt*2.2+i)*.5;tn.rotation.z=Math.cos(tt*1.8+i)*.5})});
  SEAMON=SEAMON.filter(o=>{if(o.dead){seaGrp().remove(o.g);return false}return true})}
-function startFish(){if(gi('rod')<0){news('Il te faut une canne à pêche : fabrique-la à la forge du Bricolo');return}const lv=RODS[gi('rod')][1];FISH={st:'wait',t:(2.5+Math.random()*4.5)/(1+lv*.12),x:S.px+40,y:S.py};const nf=FSH.some(f=>Math.hypot(f.x-FISH.x,f.y-FISH.y)<110);if(nf){FISH.bonus=1;FISH.t*=.45}sfx('pick');pop(S.px+60,S.py,nf?'Plouf ! Un poisson approche…':'Plouf !','#7fe3ff',6,'#bfe8ff')}
+function startFish(){if(gi('rod')<0){news(S.gear.rod&&S.gear.rod.d===0?'Ta canne est cassée : répare-la à la forge du Bricolo':'Il te faut une canne à pêche : fabrique-la à la forge du Bricolo');return}const lv=RODS[gi('rod')][1];FISH={st:'wait',t:(2.5+Math.random()*4.5)/(1+lv*.12),x:S.px+40,y:S.py};const nf=FSH.some(f=>Math.hypot(f.x-FISH.x,f.y-FISH.y)<110);if(nf){FISH.bonus=1;FISH.t*=.45}sfx('pick');pop(S.px+60,S.py,nf?'Plouf ! Un poisson approche…':'Plouf !','#7fe3ff',6,'#bfe8ff')}
 function updateFish(dt){if(!FISH)return;if(S.moving){FISH=null;news('Tu ranges ta canne');return}FISH.t-=dt;
  if(FISH.st==='wait'&&FISH.t<=0){FISH.st='bite';FISH.t=1.3;sfx('alert');pop(S.px+60,S.py-10,'Ça mord !','#f6d77c',10,'#fff')}
  else if(FISH.st==='bite'&&FISH.t<=0){FISH=null;news('Il s’est échappé… sois plus rapide !')}}
@@ -1887,7 +1891,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-32';
+const GAME_VERSION='web-33';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
