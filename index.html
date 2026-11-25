@@ -624,7 +624,7 @@ function harvest(s){const b=SECS[S.sec][1],space=S.bagCap-S.bag,n=Math.floor(Mat
 function loadCrate(x,y){const ld=Math.floor(Math.min(S.stock,S.crateCap-S.crate));S.stock-=ld;S.crate+=ld;pop(x,y,'+'+fmt(ld)+' L','#f6d77c',6,'#c98a4a');sfx('pick')}
 function cands(){const L=[],m=MP;
  if(MINE)return mineCands();
- SRC.forEach(s=>{if(s.map!==m.id)return;{const hp=cropHp(s);if(hp<70){L.push({x:s.x,y:s.y,o:s,label:'Plant abîmé ('+Math.round(hp)+' %) : soigner (+25 %)',ok:true,act:()=>{S.chp[s.id]=Math.min(100,cropHp(s)+25);if(S.chp[s.id]>=100)delete S.chp[s.id];pop(s.x,s.y,'Soigné ! '+Math.round(cropHp(s))+' %','#7ddc6a',8,'#7ddc6a');sfx('pick')}});return}}const b=SECS[S.sec][1],n=Math.floor(Math.min(s.stock,(S.bagCap-S.bag)/(1+b)));L.push({x:s.x,y:s.y,o:s,label:S.bag>=S.bagCap?'Panier plein, va remplir tes machines':n<1?s.kind+' : ça pousse…':'Récolter : '+s.kind+' (+'+Math.min(S.bagCap-S.bag,Math.round(n*(1+b)))+')',ok:n>=1,
+ SRC.forEach(s=>{if(s.map!==m.id)return;{const hp=cropHp(s);if(hp<70){const c=cropFix(s);L.push({x:s.x,y:s.y,o:s,label:'Plant abîmé ('+Math.round(hp)+' %) : réparer à 100 % ('+usd(c)+')',ok:S.E>=c,act:()=>{const c=cropFix(s);if(S.E<c){news('Pas assez d’argent : il faut '+usd(c)+' pour réparer ce plant');sfx('sad');return}S.E-=c;delete S.chp[s.id];pop(s.x,s.y,'Réparé ! -'+usd(c),'#7ddc6a',8,'#7ddc6a');sfx('buy')}});return}}const b=SECS[S.sec][1],n=Math.floor(Math.min(s.stock,(S.bagCap-S.bag)/(1+b)));L.push({x:s.x,y:s.y,o:s,label:S.bag>=S.bagCap?'Panier plein, va remplir tes machines':n<1?s.kind+' : ça pousse…':'Récolter : '+s.kind+' (+'+Math.min(S.bagCap-S.bag,Math.round(n*(1+b)))+')',ok:n>=1,
   act:()=>{const g=harvest(s);pop(s.x,s.y,'+'+g+' fruits','#fbeedd',10,'#'+(KINDS[s.kind].fruit||KINDS[s.kind].col).toString(16).padStart(6,'0'));sfx('pick')}})});
  if(m.id==='home'){S.mach.forEach(mc=>{const d=M[mc.t],n=Math.min(S.bag,Math.floor(d.cap-mc.buf)),x=PX+mc.tx*T+T/2,y=PY+mc.ty*T+T/2;
    if(mc.br){const rq=REPAIR[mc.t],paid=mc.rp>0,can=paid||hasMat(rq)||S.items.kit>0;L.push({x,y,o:mc,label:paid?'Réparation de '+d.name+' : '+mc.rp+'/4 (continue !)':can?'En panne ! Réparer '+d.name+' ('+(hasMat(rq)?matTxt(rq):'1 kit')+', 4 coups)':'En panne : il te faut '+matTxt(rq)+' pour réparer '+d.name,ok:can,act:()=>{if(!mc.rp){if(hasMat(rq))payMat(rq);else S.items.kit--}mc.rp=(mc.rp||0)+1;sfx('mine');pop(x,y,'Clang ! '+mc.rp+'/4','#e8f0f8',8,'#b8b8c0');if(mc.rp>=4){mc.br=0;mc.rp=0;pop(x,y,'Réparé !','#7ddc6a',14,'#fff');sfx('buy')}}});return}
@@ -785,7 +785,7 @@ function todoRaw(){
  if(S.hp<S.hpMax*.3)return['Tu es blessé : éloigne-toi des monstres pour reprendre des forces',S.px,S.py,1];
  const an=ANIM.find(a=>a.st==='eat'||a.st==='in'||a.st==='atk');if(an)return[(an.st==='atk'?'Attention : ':'Chasse : ')+an.name+' !',an.x,an.y];
  if(m.id==='home'&&S.busBr)return['Le bus touristique est en panne : va le dépanner',S.busBr.x,11.55*T];
- {const hurt=SRC.find(s=>s.map===m.id&&cropHp(s)<40);if(hurt)return['Un plant est abîmé : va le soigner',hurt.x,hurt.y]}
+ {const hurt=SRC.find(s=>s.map===m.id&&cropHp(s)<40);if(hurt)return['Un plant est abîmé : va le réparer ('+usd(cropFix(hurt))+')',hurt.x,hurt.y]}
  if(m.id==='home'){const br=S.mach.find(x=>x.br);if(br){if(!br.rp&&!hasMat(REPAIR[br.t])&&!(S.items.kit>0)){const need=Object.keys(REPAIR[br.t]).find(k=>ore(k)<REPAIR[br.t][k]);return need==='bois'?['Coupe du bois pour réparer ta machine',m.WOOD[0][0]*T,m.WOOD[0][1]*T]:['Va chercher '+MATN[need][1].toLowerCase()+' (grotte ou marchand) pour réparer',m.CAVES[0].ex,m.CAVES[0].ey]}return['Répare ta machine en panne',PX+br.tx*T+20,PY+br.ty*T+20]}}
  if(S.crate>=1){const ob=m.STORES.find(s=>bizOwned(s)&&bizShelf(s)<bizCap(s)-1);if(ob)return['Remplis les rayons : '+ob.name,m.BID[ob.b].dx,m.BID[ob.b].dy]}
  if(m.id!=='home'){if(S.bag>=S.bagCap*.6)return['Envoie tes fruits au dépôt',m.BID[m.id+'_dep'].dx,m.BID[m.id+'_dep'].dy];if(S.stock>=8&&S.crate<S.crateCap*.5&&m.STORES.some(bizOwned))return['Charge des litres au dépôt',m.BID[m.id+'_dep'].dx,m.BID[m.id+'_dep'].dy]}
@@ -943,7 +943,7 @@ function update(dt){
   if(!solid(S.px,yy)){S.py=yy;moved=true}else if(Math.abs(vx)>.05){const xx=ox+Math.sign(vx)*sp;if(!solid(xx,S.py)){S.px=xx;moved=true}}
   if(!moved)target=null;else{S.moving=true;S.step=(S.step||0)+dt*12;S.ang=Math.atan2(vx,vy)}}
  if(S.cafeT>0)S.cafeT-=dt;
- if(HOSTSIM()){const rg=wxRegen()*S.regen;SRC.forEach(s=>{const hp=cropHp(s);s.stock=Math.min(s.cap,s.stock+s.regen*rg*dt*Math.max(0,hp)/100);if(hp<100){const n=hp+.15*dt;if(n>=100)delete S.chp[s.id];else S.chp[s.id]=n}});
+ if(HOSTSIM()){const rg=wxRegen()*S.regen;SRC.forEach(s=>{const hp=cropHp(s);s.stock=Math.min(s.cap,s.stock+s.regen*rg*dt*Math.max(0,hp)/100);if(hp<100&&hp>=70){const n=hp+.15*dt;if(n>=100)delete S.chp[s.id];else S.chp[s.id]=n}});
  MAPLIST.forEach(m=>m.WOOD.forEach((w,i)=>{const id=m.id+'_w'+i;S.wood[id]=Math.min(8,(S.wood[id]??8)+dt*.05)}));
  const wk=S.workers*1.2*TOOLS[S.tools][1]*dt,live=S.mach.filter(m=>!m.br);if(wk>0){const open=live.filter(m=>m.buf<M[m.t].cap);open.forEach(m=>{m.buf+=Math.min(wk/open.length,M[m.t].cap-m.buf)})}
  if(S.silo>0){live.forEach(m=>{const take=Math.min(S.silo,M[m.t].cap-m.buf,30*dt);m.buf+=take;S.silo-=take})}
@@ -1478,6 +1478,7 @@ document.getElementById('hotbar').addEventListener('click',e=>{const b=e.target.
 addEventListener('keydown',e=>{if(!running||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.code==='Digit1')setHot(0);else if(e.code==='Digit2')setHot(1);else if(e.code==='Digit3')setHot(2)});
 setInterval(renderHot,500);
 const cropHp=s=>{const v=S.chp&&S.chp[s.id];return v==null?100:v};
+const cropFix=s=>Math.max(1,Math.ceil((100-cropHp(s))*.6*Math.pow(1.6,tierOf())));
 const m2=i=>{const m=S.mach[i];return m?(m.br?' (en panne)':'')+' n°'+(i+1):''};
 function machRefund(k){const n=Math.max(1,S.bought[k]||1),c=Math.round(M[k].cost*Math.pow(1.25,n-1)*DIFF*.3),mt={};Object.entries(M[k].mat||{}).forEach(([a,v])=>{const q=Math.floor(Math.ceil(v*(1+.5*(n-1)))*.3);if(q>0)mt[a]=q});return[c,mt]}
 function sellMach(i,pend){const k=pend?S.pending[i]:S.mach[i]&&S.mach[i].t;if(!k)return;const[c,mt]=machRefund(k);if(pend)S.pending.splice(i,1);else{S.mach.splice(i,1);rebuildHome()}S.bought[k]=Math.max(0,(S.bought[k]||1)-1);S.E+=c;Object.entries(mt).forEach(([a,q])=>addInv(a,q,true));sfx('coin');news(M[k].name+' revendue : +'+usd(c)+(Object.keys(mt).length?' + '+matTxt(mt):''))}
@@ -1619,7 +1620,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-19';
+const GAME_VERSION='web-20';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
