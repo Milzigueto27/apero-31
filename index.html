@@ -1204,11 +1204,13 @@ function dressAnim(g,o){const u=g.userData;loadAnimOutfit(o).then(A=>{if(u.wantO
   g.updateMatrixWorld(true);const gs=new THREE.Vector3();g.getWorldScale(gs);
   [['RightHand',u.arms[1]],['LeftHand',u.arms[0]]].forEach(([bn,arm])=>{const bone=m.getObjectByName(bn);if(!bone)return;const bs=new THREE.Vector3();bone.getWorldScale(bs);const px=new THREE.Group();px.scale.setScalar(gs.x/bs.x);px.rotation.z=Math.PI;px.position.y=-.38*gs.x/bs.x;bone.add(px);
    arm.children.slice().forEach(t=>{if(!t.isMesh&&t!==m){moved.push([t,arm]);px.add(t)}})});
-  u.dress={id:o.id,add,hid,moved,anim:1};u.dressed=true;u.swing=1;u.anim={mixer,acts,cur:null,once:null,onceT:0};playAnim(u,'idle')}).catch(()=>{if(u.wantOut===o.id&&!u.dress){if(o.glb)dressGlb(g,o);else dressPerson(g,'rodeur')}})}
+  u.dress={id:o.id,add,hid,moved,anim:1};u.dressed=true;u.swing=1;u.anim={mixer,acts,cur:null,once:null,onceT:0,nat:strideOf(m,mixer,acts),lp:null,spd:0};playAnim(u,'idle')}).catch(()=>{if(u.wantOut===o.id&&!u.dress){if(o.glb)dressGlb(g,o);else dressPerson(g,'rodeur')}})}
+function strideOf(m,mixer,acts){const nat={},v=new THREE.Vector3(),ft=m.getObjectByName('LeftFoot');if(!ft)return nat;['walk','run','sneak','torchwalk','carry'].forEach(k=>{const a=acts[k];if(!a)return;const d=a.getClip().duration;a.reset().play();let lo=1e9,hi=-1e9;for(let i=0;i<=24;i++){mixer.setTime(d*i/24);m.updateMatrixWorld(true);v.setFromMatrixPosition(ft.matrixWorld);m.worldToLocal(v);v.multiplyScalar(m.scale.x);lo=Math.min(lo,v.z);hi=Math.max(hi,v.z)}a.stop();nat[k]=Math.max(.2,2*(hi-lo))/d});mixer.setTime(0);return nat}
 function playAnim(u,name,once){const A=u.anim;if(!A)return false;const a=A.acts[name];if(!a)return false;if(once){A.once=name;A.onceT=Math.min(a.getClip().duration,once===true?99:once)}if(A.cur===name&&!once)return true;const prev=A.cur&&A.acts[A.cur];a.reset();a.setLoop(once?THREE.LoopOnce:THREE.LoopRepeat);a.clampWhenFinished=!!once;a.enabled=true;a.setEffectiveWeight(1);a.play();if(prev&&prev!==a)prev.crossFadeTo(a,.18,false);A.cur=name;return true}
 function animOnce(g,name,dur){const u=g&&g.userData;if(u&&u.anim)playAnim(u,name,dur||true)}
-function animStep(g,moving,dt,speed){const u=g.userData,A=u.anim;A.mixer.update(dt||.016);if(A.once){A.onceT-=dt||.016;if(A.onceT>0)return;A.once=null}
- const want=moving?(speed>300&&A.acts.run?'run':'walk'):(u.pose&&A.acts[u.pose]?u.pose:'idle');if(want!==A.cur)playAnim(u,want);if(A.cur==='walk'&&A.acts.walk)A.acts.walk.timeScale=Math.max(.8,Math.min(1.6,(speed||180)/180))}
+function animStep(g,moving,dt,speed){const u=g.userData,A=u.anim;dt=dt||.016;{const p=g.position;if(A.lp&&dt>0){const ws=g.scale.x||1,v=Math.hypot(p.x-A.lp.x,p.z-A.lp.z)/dt/ws;A.spd+=(Math.min(v,20)-A.spd)*Math.min(1,dt*10)}else A.lp=new THREE.Vector3();A.lp.copy(p)}
+ A.mixer.update(dt);if(A.once){A.onceT-=dt||.016;if(A.onceT>0)return;A.once=null}
+ const nw=A.nat.walk||1.2,want=moving?(A.acts.run&&A.nat.run&&A.spd>nw*1.9?'run':'walk'):(u.pose&&A.acts[u.pose]?u.pose:'idle');if(want!==A.cur)playAnim(u,want);const n=A.nat[A.cur];if(n&&moving)A.acts[A.cur].timeScale=Math.max(.5,Math.min(2.2,A.spd/n))}
 function animForLabel(l){l=l||'';if(/Récolt|Cueill|Ramass|Arrach/i.test(l))animOnce(PLAYER,'pickup',1.6);else if(/Rempl|Charg|Livr|Dépos|Vend|Achet|Pose/i.test(l))animOnce(PLAYER,'collect',1.4)}
 function dressPerson(g,id){if(!OUTID.has(id))id='fermier';const u=g.userData;u.wantOut=id;const od=OUTFITS.find(x=>x.id===id);if(od.anim){dressAnim(g,od);return}if(od.glb){dressGlb(g,od);return}undress(g);u.swing=1;const parts=buildOutfit(id),add=[],hid=[],hide=o=>{if(o.visible){o.visible=false;hid.push(o)}};
  u.body.children.forEach(c=>{if(c.isMesh)hide(c)});u.legs.concat(u.arms).forEach(p=>p.children.forEach(c=>{if(c.isMesh)hide(c)}));u.eyes.children.forEach(hide);
@@ -1769,7 +1771,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-24';
+const GAME_VERSION='web-25';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
