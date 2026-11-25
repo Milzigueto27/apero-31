@@ -243,7 +243,7 @@ const MATS=[['bois','Bois','#a0703a',4],['pierre','Pierre','#9a9a90',3],['fer','
 const REPAIR={seau:{bois:3},pressoir:{bois:6},alambic:{cuivre:4,bois:4},cuve:{fer:6,bois:4},tonneaux:{bois:12,fer:3},colonne:{cuivre:8,argent:3},ligne:{fer:15,or:3},chai:{bois:30,or:6},usine:{fer:40,diamant:3}};
 const MATN=Object.fromEntries(MATS.map(m=>[m[0],m]));
 const NODEHP={pierre:3,fer:5,cuivre:7,argent:12,or:20,diamant:36,relique:26,jade:44,meteorite:70};
-const ITEMS=[['engrais','Engrais','Tous tes champs de cette ville repoussent d’un coup.',80,'#7ddc6a'],['repulsif','Répulsif','Plus aucun animal dans cette ville pendant une demi-journée.',150,'#b07ae0'],['cafe','Café serré','Tu cours 60 % plus vite pendant 2 minutes.',40,'#6b3a1a'],['huile','Huile de lanterne','+120 s de lumière pour ta lanterne (pas la torche).',30,'#f6c432'],['feu','Feu d’artifice','Un feu d’artifice : 2× plus de clients pendant 40 s.',300,'#ff5c93'],['kit','Kit de réparation','Remplace les matériaux pour réparer UNE machine ou le bus (il faut quand même taper).',400,'#9aa0a8'],['fleche','Flèche','Munition pour ton arc.',4,'#c8a060']];
+const ITEMS=[['engrais','Engrais','Tous tes champs de cette ville repoussent d’un coup.',80,'#7ddc6a'],['repulsif','Répulsif','Plus aucun animal dans cette ville pendant une demi-journée.',150,'#b07ae0'],['cafe','Café serré','Tu cours 60 % plus vite pendant 2 minutes.',40,'#6b3a1a'],['feu','Feu d’artifice','Un feu d’artifice : 2× plus de clients pendant 40 s.',300,'#ff5c93'],['kit','Kit de réparation','Remplace les matériaux pour réparer UNE machine ou le bus (il faut quand même taper).',400,'#9aa0a8'],['fleche','Flèche','Munition pour ton arc.',4,'#c8a060']];
 const ITN=Object.fromEntries(ITEMS.map(i=>[i[0],i]));
 const M={
  seau:{name:'Seau à presser',desc:'Tu écrases les fruits à la main.',cost:15,rate:.5,yld:1,cap:10,tier:0,mat:{}},
@@ -320,7 +320,7 @@ const FENCES=[['Aucune clôture',0,0,0,0,{}],['Clôture en bois',.3,.1,150,0,{bo
 const PICKS=[['Pioche en bois',2,{},0,-1,0],['Pioche en pierre',3,{pierre:8,bois:3},20,60,0],['Pioche en fer',5,{fer:8,bois:2},120,100,1],['Pioche en cuivre',8,{fer:4,cuivre:10},600,160,1],['Pioche en argent',13,{argent:10,bois:4},4000,240,2],['Pioche en or',20,{or:10,fer:6},20000,320,3],['Pioche en diamant',32,{diamant:6,or:4},120000,1200,4],['Pioche en jade',45,{jade:6,diamant:2},500000,1600,5],['Pioche météorite',70,{meteorite:5,diamant:4},3000000,4000,6]];
 const TOOLS=[['Outils de base',1,{},0],['Outils en fer',1.3,{fer:20},300],['Outils en cuivre',1.7,{fer:10,cuivre:25},2000],['Outils en argent',2.2,{argent:25},15000],['Outils en or',3,{or:25},80000],['Outils en diamant',4.5,{diamant:15},400000],['Outils en météorite',7,{meteorite:10},8000000]];
 const SECS=[['Mains nues',0,{},0],['Sécateur en fer',.3,{fer:10},150],['Sécateur en argent',.7,{argent:15},8000],['Sécateur en diamant',1.5,{diamant:10},250000],['Sécateur en jade',2.5,{jade:8},900000]];
-const LAMPS=[['Torche',0,{bois:2},5,90,0],['Lanterne en fer',0,{fer:6},150,600,1],['Lanterne en cuivre',0,{cuivre:10,fer:2},900,1500,2],['Lanterne en argent',0,{argent:10},8000,4000,3],['Lampe torche (à vie)',0,{argent:6,or:4,cuivre:8},40000,-1,4]],LANTS=LAMPS;
+const LAMPS=[['Torche',0,{},20,-1,0]],LANTS=LAMPS;
 const KINDS={
  Pommier:{t:'tree',leaf:0x2f7a34,leaf2:0x46993f,fruit:0xe2384a,cap:8,regen:.15},
  Cerisier:{t:'tree',leaf:0xe98fb0,leaf2:0xf7b6cf,fruit:0xb3122e,cap:10,regen:.2},
@@ -393,7 +393,7 @@ const HOME={id:'home',name:'Ton village',theme:'normal',WT:112,HT:80,sea:104,
  CHARS:[{id:'maire',name:'Le maire',x:43.8,y:20.3,look:'maire',talk:['Bienvenue dans notre belle région !','Prends une mission au tableau, juste là.','Une commande ? Ne la rate pas, les gens comptent sur toi !']},
   {id:'forge',name:'Gaby la forgeronne',x:39.6,y:7.6,look:'forge',talk:['Ramène-moi du minerai, je forge tes outils !','Les grosses machines ont besoin de fer et de cuivre.','La forge est dans le Bricolo, onglet Forge.']},
   {id:'peche',name:'Le pêcheur',x:107,y:21,look:'peche',talk:['Le bar du port est à vendre, tu sais…','La nuit, des choses rôdent dans les champs…','Belle mer aujourd’hui !','Fabrique une canne à la forge et viens pêcher au bout du ponton !']},
-  {id:'mine',name:'Mimi la mineuse',x:7.5,y:57.6,look:'mine',talk:['Entre dans la grotte et descends les niveaux !','Plus tu descends, plus le minerai est rare.','Sans lampe, pas de grotte ! Fabrique une torche à la forge.','Plus tu descends, plus les monstres sont forts. Prends une épée !']},
+  {id:'mine',name:'Mimi la mineuse',x:7.5,y:57.6,look:'mine',talk:['Entre dans la grotte et descends les niveaux !','Plus tu descends, plus le minerai est rare.','Sans torche, pas de grotte ! Achète-la au Bricolo, onglet Forge.','Plus tu descends, plus les monstres sont forts. Prends une épée !']},
   {id:'kid',name:'Léo',x:39,y:25,look:'kid',talk:['Un jour j’aurai ma boutique moi aussi !','J’ai vu un yéti quand il neigeait, je te jure !']},
   {id:'rosa',name:'Rosa la marchande',x:60,y:50.6,look:'rosa',talk:['Je t’achète tes minerais au bon prix !','Engrais, répulsif, café… j’ai tout ce qu’il faut.']}],
  animals:['lapin','lapin','sanglier','cerf'],arrive:{x:44.5,y:10.4},who:['Le mariage de Julie','Le club de pétanque','La fête des voisins','Le bal des pompiers','L’anniversaire de Léo','Le banquet du maire']};
@@ -465,7 +465,7 @@ let S,MP=HOME,SRC=[],FX=[],NPC=[],ANIM=[],keys={},joyV={x:0,y:0},target=null,aut
 const ACC={};
 function fresh(){return{v:7,time:DAY*.05,day:1,E:0,bag:0,bagCap:10,crate:0,crateCap:20,stock:0,shelf:0,shelfCap:40,del:0,speed:180,price:2,workers:0,auto:false,passive:0,cust:1,buy:1,maxExtra:0,regen:1,happy:false,bus:false,quartier:false,plot:0,
  px:HOME.BID.home.dx,py:HOME.BID.home.dy+30,map:'home',mach:[{t:'seau',tx:0,ty:0,buf:0}],pending:[],ups:{},bought:{},parcels:{},rank:0,src:{},saved:0,evT:0,evCD:0,flyCD:0,busT:0,
- prot:0,rainOk:false,serre:false,vinchaud:false,meca:false,shoo:1,nightGuard:false,seed:{},fence:{},biz:{},ore:{},items:{fleche:0},hp:100,hpMax:100,trees:{b1:1,b2:1,b3:1},gear:{pick:{i:0,d:-1},lamp:{i:0,d:90}},invLv:0,offers:[],trucks:[],busLv:0,busBr:null,quai:0,nTruck:0,mOff:null,pick:0,tools:0,sec:0,lant:0,wood:{},wx:{k:'clear',t:300},snowC:0,mission:null,missDone:0,pubB:0,posters:{},animT:40,lastTier:0,
+ prot:0,rainOk:false,serre:false,vinchaud:false,meca:false,shoo:1,nightGuard:false,seed:{},fence:{},biz:{},ore:{},items:{fleche:0},hp:100,hpMax:100,trees:{b1:1,b2:1,b3:1},gear:{pick:{i:0,d:-1}},invLv:0,offers:[],trucks:[],busLv:0,busBr:null,quai:0,nTruck:0,mOff:null,pick:0,tools:0,sec:0,lant:0,wood:{},wx:{k:'clear',t:300},snowC:0,mission:null,missDone:0,pubB:0,posters:{},animT:40,lastTier:0,
  rep:3,orders:[],ordT:120,silo:0,cities:{},rept:{},cafeT:0,stats:{served:0,sad:0,monsters:0,orders:0},ach:{},today:{L:0,money:0,served:0,sad:0,startE:0},surf:null}}
 let DIFF=1;const cc=x=>Math.round(x*DIFF);
 const tierOf=()=>{let t=0;TIERS.forEach((x,i)=>{if(S.del>=x[1]*DIFF)t=i});return t};
@@ -510,9 +510,9 @@ function decode(t){t=t.trim();const v=+(t.match(/^OM(\d):/)||[])[1];if(![3,5,6,7
  if(v<7){o.map='home';o.time=(o.time||0)*DAY/360;if(o.wx)o.wx.t=300;Object.keys(o.fence||{}).forEach(k=>{o.fence[k]=Math.min(4,o.fence[k])})}
  return o}
 function load(o){S=Object.assign(fresh(),o);S.v=7;S.pending=S.pending||[];S.mach=S.mach.filter(m=>M[m.t]);S.ore=Object.assign({},S.ore);S.items=Object.assign({},S.items);S.stats=Object.assign(fresh().stats,S.stats);S.today=Object.assign(fresh().today,S.today);
- if(!o.gear){const om=[0,2,3,4,5,7,8][o.pick||0]||0,li=Math.min(4,(o.lant||0)+1);S.gear={pick:{i:om,d:PICKS[om][4]},lamp:{i:li,d:LAMPS[li][4]}}}
+ if(!o.gear){const om=[0,2,3,4,5,7,8][o.pick||0]||0;S.gear={pick:{i:om,d:PICKS[om][4]},lamp:{i:0,d:-1}}}
  if(!o.trees){S.trees={};ALLPARCELS.forEach(p=>{if(p.base||(o.parcels&&o.parcels[p.id]))S.trees[p.id]=nSrc(p)})}
- if(o.invLv==null)fitInvLv();if(o.bus&&!o.busLv)S.busLv=1;S.hp=S.hpMax||100;S.offers=S.offers||[];S.trucks=S.trucks||[];S.gear=Object.assign({},S.gear);S.trees=Object.assign({},S.trees);
+ if(o.invLv==null)fitInvLv();if(o.bus&&!o.busLv)S.busLv=1;S.hp=S.hpMax||100;S.offers=S.offers||[];S.trucks=S.trucks||[];S.gear=Object.assign({},S.gear);if(S.gear.lamp)S.gear.lamp={i:0,d:-1};S.trees=Object.assign({},S.trees);
  if(!MAPS[S.map])S.map='home';S.surf=null;if(S.time>DAY)S.time%=DAY;MINE=null;exitMineScene();SRC=[];buildSources();FX=[];clearActors();target=null;autoAct=null;camInit=false;switchMap(S.map,true);rebuildHome();save(true)}
 function clearActors(){NPC.forEach(n=>disposeObj(n.g));NPC=[];ANIM.forEach(a=>disposeObj(a.g));ANIM=[];if(BUS){scene.remove(BUS.g);BUS=null}}
 function ago(t){const m=Math.round((Date.now()-t)/60000);return m<1?'à l’instant':m<60?'il y a '+m+' min':m<1440?'il y a '+Math.round(m/60)+' h':'il y a '+Math.round(m/1440)+' j'}
@@ -722,7 +722,7 @@ function genLevel(cave,depth){const W=36,H=26,r=rng(hashStr(cave.id+':'+depth+':
  return{W,H,g,entry,down,nodes,bats,mons,torches,cave,depth}}
 function mineSolid(x,y){const L=MINE.lv,cx=Math.floor(x/T),cy=Math.floor(y/T);if(cx<0||cy<0||cx>=L.W||cy>=L.H)return true;if(L.g[cy*L.W+cx])return true;const ox=x/T-cx-.5,oy=y/T-cy-.5;
  for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){if(L.g[(cy+b)*L.W+cx+a]&&((a&&Math.sign(ox)===a&&Math.abs(ox)>.28)||(b&&Math.sign(oy)===b&&Math.abs(oy)>.28)))return true}return false}
-function enterMine(c,depth){if(!MINE){if(lampLeft()<=0){news('Il te faut une lampe : fabrique une torche (2 bois) à la forge du Bricolo');sfx('sad');return}S.surf={x:S.px,y:S.py,map:MP.id}}MINE={cave:c,depth,lv:genLevel(c,depth)};const e=MINE.lv.entry;S.px=(e%MINE.lv.W+.5)*T;S.py=(Math.floor(e/MINE.lv.W)+.5)*T;
+function enterMine(c,depth){if(!MINE){if(lampLeft()<=0){news('Il te faut une torche : achète-la au Bricolo, onglet Forge (20 $, elle dure pour toujours)');sfx('sad');return}S.surf={x:S.px,y:S.py,map:MP.id}}MINE={cave:c,depth,lv:genLevel(c,depth)};const e=MINE.lv.entry;S.px=(e%MINE.lv.W+.5)*T;S.py=(Math.floor(e/MINE.lv.W)+.5)*T;
  target=null;autoAct=null;camInit=false;clearActors();buildMineScene();if(depth>=5)unlockAch('deep5');news(c.name+' · niveau '+depth+(depth===c.depth?' (le plus profond)':''));sfx('mine')}
 function exitMine(forced){if(!MINE)return;const s=S.surf;MINE=null;exitMineScene();S.px=s.x;S.py=s.y;S.surf=null;camInit=false;target=null;autoAct=null;news(forced?'Tu remontes à tâtons vers la sortie…':'De retour à la surface !')}
 function mineCands(){const L=[],lv=MINE.lv,W=lv.W;
@@ -807,7 +807,7 @@ function renderShop(){const t=tierOf(),ft=freeTiles();let h='';
  else{h=`<p>Tes matériaux : ${MATS.filter(m=>ore(m[0])>0).map(m=>m[1]+' '+fmt(ore(m[0]))).join(' · ')||'aucun'}. Mine dans les grottes et coupe du bois.</p>`;
   h+='<h3>Fabriquer (outils et armes qui s’usent)</h3>';Object.keys(GEAR).forEach(k=>{const G0=GEAR[k],g=S.gear[k],i=gi(k),cur=i>=0?G0.L[i]:null;
    h+=`<div class="card"><b>${G0.n}</b> · ${cur?cur[0]+(G0.st?' ('+G0.st+' '+cur[1]+')':'')+' · '+(g&&g.d>=0?Math.ceil(g.d)+'/'+cur[4]+' '+G0.u:'à vie'):'aucune'}`+(cur&&g&&g.d>=0?`<div class="meter"><i style="width:${Math.max(2,Math.round(g.d/cur[4]*100))}%"></i></div>`:'')+'<div class="row">';
-   G0.L.forEach((c,j)=>{if(k==='pick'&&j===0)return;if(c[5]>t+1)return;const lk=c[5]>t;h+=`<button class="btn ghost sm" data-cr="${k}" data-j="${j}" ${lk||!canPay(c)?'disabled':''}>${lk?c[0]+' : échelon « '+TIERS[c[5]][0]+' »':c[0]+' ('+(G0.st?G0.st+' '+c[1]+', ':'')+(c[4]<0?'à vie':c[4]+' '+G0.u)+') · '+costTxt(c)}</button>`});h+='</div></div>'});
+   G0.L.forEach((c,j)=>{if(k==='pick'&&j===0)return;if(k==='lamp'&&gi('lamp')>=0)return;if(c[5]>t+1)return;const lk=c[5]>t;h+=`<button class="btn ghost sm" data-cr="${k}" data-j="${j}" ${lk||!canPay(c)?'disabled':''}>${lk?c[0]+' : échelon « '+TIERS[c[5]][0]+' »':(k==='lamp'?'Acheter':'Fabriquer')+' : '+c[0]+' ('+(G0.st?G0.st+' '+c[1]+', ':'')+(c[4]<0?'à vie':c[4]+' '+G0.u)+') · '+costTxt(c)}</button>`});h+='</div></div>'});
   h+=`<div class="card"><b>Flèches</b> · tu en as ${S.items.fleche||0}<div class="row"><button class="btn ghost sm" data-ar="1" ${canPay([0,0,{bois:3,pierre:2},10])?'':'disabled'}>Fabriquer 10 flèches · 10 $ + 3 bois + 2 pierre</button></div></div><h3>Améliorations permanentes</h3>`;
   [['tools',TOOLS,'Outils des ouvriers','× fruits/s de tes ouvriers',c=>'×'+String(c[1]).replace('.',',')],['sec',SECS,'Ton sécateur','% de fruits en plus',c=>'+'+Math.round(c[1]*100)]].forEach(([k,L,n,u,f])=>{const cur=S[k],nx=L[cur+1];
    h+=`<div class="card"><b>${n}</b> · actuel : ${L[cur][0]} (${f(L[cur])} ${u})<div class="row">`+(nx?`<button class="btn ghost sm" data-fo="${k}" ${canPay(nx)?'':'disabled'}>Forger : ${nx[0]} (${f(nx)} ${u}) · ${costTxt(nx)}</button>`:'<small>Au maximum</small>')+'</div></div>'})}
@@ -953,7 +953,7 @@ function lightCalc(){const h=hourOf();let d=0;if(h>=20.5||h<5)d=1;else if(h>=17.
 let hudT=0;
 function hud(dt){hudT-=dt;if(hudT>0)return;hudT=.1;const t=tierOf(),h=hourOf();
  $('hE').textContent=fmt(S.E);$('pE').style.color=S.E<0?'#ff8fa8':'';$('hRep').textContent=S.rep.toFixed(1).replace('.',',');$('hB').textContent=S.bag+'/'+S.bagCap;$('hC').textContent=fmt(S.crate)+'/'+fmt(S.crateCap);$('hS').textContent=fmt(S.stock);$('hR').textContent=fmt(S.shelf)+'/'+fmt(S.shelfCap);
- $('hW').textContent=MINE?(lampLeft()===Infinity?'Lampe à vie':gearName('lamp')+' '+Math.ceil(lampLeft())+' s'):wxName();$('hM').textContent=MINE?MINE.cave.name+' · niveau '+MINE.depth:MP.name;
+ $('hW').textContent=MINE?'Torche':wxName();$('hM').textContent=MINE?MINE.cave.name+' · niveau '+MINE.depth:MP.name;
  $('hT').textContent=String(Math.floor(h)).padStart(2,'0')+':'+String(Math.floor(h%1*6)*10).padStart(2,'0');$('hD').textContent='Jour '+S.day;
  const nx=RANKS[S.rank+1],rk=RANKS[S.rank];
  $('hG').textContent=(CO?'Coop ×'+String(DIFF.toFixed(1)).replace('.',',')+' · ':'')+'Échelon '+(t+1)+' · '+TIERS[t][0]+' · '+fmt(S.del)+' L vendus · '+rk[1]+(nx?' → '+nx[1]+' à '+fmt(nx[0]):'');
@@ -1424,7 +1424,7 @@ $('act').onclick=act;
 const SWORDS=[['Épée en bois',3,{bois:8},40,40,0],['Épée en fer',6,{fer:10,bois:2},250,90,1],['Épée en cuivre',9,{cuivre:12,fer:4},1200,130,1],['Épée en argent',15,{argent:12,fer:4},8000,200,2],['Épée en or',24,{or:12,argent:4},40000,280,3],['Épée en diamant',40,{diamant:8,or:4},200000,900,4],['Épée météorite',80,{meteorite:6,diamant:4},4000000,3000,6]];
 const BOWS=[['Arc en bois',4,{bois:12},120,60,0],['Arc en fer',8,{bois:8,fer:8},900,120,1],['Arc composite',14,{bois:10,argent:6},9000,200,2],['Arbalète en or',26,{or:10,fer:10},60000,320,3],['Arc de diamant',45,{diamant:6,argent:6},300000,800,4]];
 const RODS=[['Canne en bambou',1,{bois:6},30,40,0],['Canne en fer',2,{bois:4,fer:6},300,100,1],['Canne en carbone',3,{cuivre:8,argent:3},5000,250,2],['Canne de champion',4,{or:6,argent:4},50000,600,3]];
-const GEAR={pick:{n:'Pioche',L:PICKS,u:'coups',st:'force'},lamp:{n:'Lampe',L:LAMPS,u:'s de lumière',st:''},sword:{n:'Épée',L:SWORDS,u:'coups',st:'dégâts'},bow:{n:'Arc',L:BOWS,u:'tirs',st:'dégâts'},rod:{n:'Canne à pêche',L:RODS,u:'lancers',st:'niveau'}};
+const GEAR={pick:{n:'Pioche',L:PICKS,u:'coups',st:'force'},lamp:{n:'Torche',L:LAMPS,u:'',st:''},sword:{n:'Épée',L:SWORDS,u:'coups',st:'dégâts'},bow:{n:'Arc',L:BOWS,u:'tirs',st:'dégâts'},rod:{n:'Canne à pêche',L:RODS,u:'lancers',st:'niveau'}};
 const gi=k=>{const g=S.gear&&S.gear[k];return g&&(g.d<0||g.d>0)?g.i:(k==='pick'?0:-1)};
 const gearName=k=>{const i=gi(k);return i<0?'aucune':GEAR[k].L[i][0]};
 function wear(k,n){const g=S.gear&&S.gear[k];if(!g||g.d<0)return;g.d-=n;if(g.d<=0){const nm=GEAR[k].L[g.i][0];delete S.gear[k];banner(nm+' cassée !',k==='pick'?'Tu reprends ta vieille pioche en bois':'Fabriques-en une autre à la forge');sfx('sad')}}
@@ -1564,7 +1564,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-5';
+const GAME_VERSION='web-6';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
