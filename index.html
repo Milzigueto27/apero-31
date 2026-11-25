@@ -728,12 +728,12 @@ function enterMine(c,depth){if(!MINE){if(lampLeft()<=0){news('Il te faut une tor
  target=null;autoAct=null;camInit=false;clearActors();buildMineScene();if(depth>=5)unlockAch('deep5');news(c.name+' · niveau '+depth+(depth===c.depth?' (le plus profond)':''));sfx('mine')}
 function exitMine(forced){if(!MINE)return;const s=S.surf;MINE=null;CAVEC=null;exitMineScene();S.px=s.x;S.py=s.y;S.surf=null;camInit=false;target=null;autoAct=null;news(forced?'Tu remontes à tâtons vers la sortie…':'De retour à la surface !')}
 function mineCands(){const L=[],lv=MINE.lv,W=lv.W;
- lv.mons.forEach(mo=>{if(mo.hp<=0)return;const k=Math.ceil(mo.hp/meleeDmg());L.push({x:mo.x,y:mo.y,o:mo,label:'Combattre : '+mo.n+' ('+k+' coup'+(k>1?'s':'')+')',ok:true,act:()=>{SWING=.4;LASTSW=Date.now();hitMon(mo,meleeDmg());if(held()==='sword'&&gi('sword')>=0)wear('sword',1)}})});
+ lv.mons.forEach(mo=>{if(mo.hp<=0)return;if(MONS[mo.ty]&&MONS[mo.ty].fly)return;const k=Math.ceil(mo.hp/meleeDmg());L.push({x:mo.x,y:mo.y,o:mo,label:'Combattre : '+mo.n+' ('+k+' coup'+(k>1?'s':'')+')',ok:true,act:()=>{SWING=.4;LASTSW=Date.now();hitMon(mo,meleeDmg());if(held()==='sword'&&gi('sword')>=0)wear('sword',1)}})});
  lv.nodes.forEach(n=>{if(n.hp<=0)return;const nm=MATN[n.ty][1],full=invRoom(n.ty)<1;L.push({x:n.x,y:n.y,o:n,label:full?'Sac plein ! ('+nm+')':'Miner : '+nm+' ('+Math.ceil(n.hp/pickF())+' coup'+(n.hp>pickF()?'s':'')+(held()==='pick'?' · '+gearName('pick'):' · à mains nues : prends ta pioche, case 3')+')',ok:!full,act:()=>{SWING=.4;LASTSW=Date.now();n.hp-=pickF();if(held()==='pick')wear('pick',1);sfx('mine');pop(n.x,n.y,'Tac !','#e8f0f8',6,MATN[n.ty][2]);if(n.mesh)n.mesh.rotation.y+=.4;
   if(n.hp<=0){const got=addInv(n.ty,n.amt);pop(n.x,n.y,'+'+got+' '+nm.toLowerCase(),MATN[n.ty][2],16,MATN[n.ty][2]);if(n.mesh)n.mesh.visible=false}}})});
  const e=lv.entry;L.push({x:(e%W+.5)*T,y:(Math.floor(e/W)+.5)*T,o:'up',label:MINE.depth===1?'Sortir de la grotte':'Remonter au niveau '+(MINE.depth-1),ok:true,act:()=>MINE.depth===1?exitMine():enterMine(MINE.cave,MINE.depth-1)});
  if(lv.down!=null){const d=lv.down;L.push({x:(d%W+.5)*T,y:(Math.floor(d/W)+.5)*T,o:'down',label:'Descendre au niveau '+(MINE.depth+1),ok:true,act:()=>enterMine(MINE.cave,MINE.depth+1)})}
- lv.bats.forEach(b=>{if(b.dead)return;L.push({x:b.x,y:b.y,o:b,label:'Frapper la chauve-souris',ok:true,act:()=>{SWING=.4;LASTSW=Date.now();killBat(b);if(held()==='sword'&&gi('sword')>=0)wear('sword',1)}})});
+ 
  return L}
 function updateMine(dt){const lg=S.gear.lamp;if(!lg){exitMine(true);return}if(lg.d>0){lg.d-=dt;if(lg.d<=0){delete S.gear.lamp;banner('Ta lampe s’est éteinte','Fabrique une autre lampe à la forge');exitMine(true);return}}updateMons(dt);
  const lv=MINE.lv;lv.bats.forEach(b=>{if(b.dead)return;b.a+=dt*2;if(b.fl>0){b.fl-=dt;b.vx=Math.cos(b.a)*140;b.vy=Math.sin(b.a)*140}else{const dx=S.px-b.x,dy=S.py-b.y,d=Math.hypot(dx,dy);if(d<260){b.vx=dx/d*95+Math.cos(b.a*3)*40;b.vy=dy/d*95+Math.sin(b.a*3)*40}else{b.vx=Math.cos(b.a)*50;b.vy=Math.sin(b.a*1.3)*50}
@@ -1509,7 +1509,7 @@ function shoot(o){const i=gi('bow');if(i<0||!(S.items.fleche>0))return;BOWT=.35;
 function killBat(b){if(b.dead)return;b.dead=true;if(b.mesh)b.mesh.visible=false;pop(b.x,b.y,'Chauve-souris abattue !','#fbeedd',8,'#fff');sfx('shoo')}
 function strike(a){SWING=.4;LASTSW=Date.now();hitAnimal(a,meleeDmg());if(held()==='sword'&&gi('sword')>=0)wear('sword',1)}
 /* ---- monstres des grottes ---- */
-const MONS={rat:{n:'Rat des cavernes',hp:5,dmg:3,sp:125,d:1},araignee:{n:'Araignée géante',hp:8,dmg:5,sp:105,d:1},slime:{n:'Slime toxique',hp:16,dmg:9,sp:85,d:2},spectre:{n:'Spectre',hp:24,dmg:13,sp:118,d:3},golem:{n:'Golem de pierre',hp:45,dmg:18,sp:55,d:3},salamandre:{n:'Salamandre de lave',hp:60,dmg:24,sp:95,d:4}};
+const MONS={rat:{n:'Rat des cavernes',hp:5,dmg:3,sp:125,d:1},araignee:{n:'Araignée géante',hp:8,dmg:5,sp:105,d:1},slime:{n:'Slime toxique',hp:16,dmg:9,sp:85,d:2},spectre:{fly:1,n:'Spectre',hp:24,dmg:13,sp:118,d:3},golem:{n:'Golem de pierre',hp:45,dmg:18,sp:55,d:3},salamandre:{n:'Salamandre de lave',hp:60,dmg:24,sp:95,d:4}};
 function genMons(r,floors,dist,W,cave,depth){const mul=(1+(depth-1)*.6)*(1+(cave.tier||0)*.45),pool=Object.keys(MONS).filter(k=>MONS[k].d<=Math.min(depth,1+Math.floor((depth+cave.tier)/2))),L=[];
  const n=Math.min(14,2+depth*2);for(let k=0;k<n*4&&L.length<n;k++){const f=floors[Math.floor(r()*floors.length)];if(dist[f]<7)continue;const ty=pool[Math.floor(r()*pool.length)],m=MONS[ty],hp=Math.round(m.hp*mul);
   L.push({ty,n:m.n,x:(f%W+.5)*T,y:(Math.floor(f/W)+.5)*T,hp,max:hp,dmg:m.dmg*(1+(depth-1)*.35)*(1+(cave.tier||0)*.3),sp:m.sp,cd:0,a:r()*6,hx:0})}return L}
@@ -1616,7 +1616,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-16';
+const GAME_VERSION='web-17';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
