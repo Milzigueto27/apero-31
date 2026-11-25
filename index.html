@@ -189,7 +189,7 @@ input[type=text]{font:800 16px Nunito;min-height:46px;padding:8px 12px;border-ra
   </div></div>
   <div class="modal" id="howto"><div class="box">
     <h2>Comment jouer</h2>
-    <p>1. <b>Récolte</b>, <b>remplis tes machines</b>, charge les litres devant ta maison et <b>remplis tes rayons</b>. Garde tes rayons pleins : un client déçu fait baisser ta <b>réputation ★</b>.<br>2. Les <b>commandes</b> (en orange) rapportent gros, mais elles ont une heure limite.<br>3. La nuit et sous la neige, des <b>monstres</b> attaquent tes champs : construis des <b>clôtures</b> (bois, fer, pierre, rempart) et chasse-les.<br>4. Entre dans les <b>grottes</b>, descends les niveaux et mine. Ta lanterne ne dure pas éternellement !<br>5. Les grosses machines demandent des <b>matériaux</b> : bois, pierre, minerais. Échange-les chez les <b>marchands</b>, regarde ton <b>Sac</b>.<br>6. À la <b>gare</b>, débloque la Vieille ville, Sakura puis Station Nova.<br>7. Chaque soir, tu paies tes <b>charges</b> : salaires et loyers.</p>
+    <p>1. <b>Récolte</b>, <b>remplis tes machines</b>, charge les litres devant ta maison et <b>remplis tes rayons</b>. Garde tes rayons pleins : un client déçu fait baisser ta <b>réputation ★</b>.<br>2. Les <b>commandes</b> (en orange) rapportent gros, mais elles ont une heure limite.<br>3. La nuit et sous la neige, des <b>monstres</b> attaquent tes champs : construis des <b>clôtures</b> (bois, fer, pierre, rempart) et chasse-les.<br>4. Entre dans les <b>grottes</b>, descends les niveaux et mine. Ta lanterne ne dure pas éternellement !<br>5. Les grosses machines demandent des <b>matériaux</b> : bois, pierre, minerais. Échange-les chez les <b>marchands</b>, regarde ton <b>Sac</b>.<br>6. À la <b>gare</b> (gratuite), ouvre la Vieille ville, Sakura puis Station Nova : achète tous les terrains et commerces d’une ville pour ouvrir la suivante.<br>7. Chaque soir, tu paies tes <b>charges</b> : salaires et loyers.</p>
     <p class="keys">PC : flèches ou ZQSD, E ou Espace pour agir, I pour le sac, molette pour zoomer, Échap pour le menu. Téléphone et tablette : touche le sol pour marcher, touche un objet pour y aller et l’utiliser, bouton Action pour agir. Même si ton téléphone est en portrait, le jeu s’affiche en paysage : tourne-le simplement.</p>
     <div class="row"><button class="btn" id="go">C'est parti</button></div>
   </div></div>
@@ -678,12 +678,15 @@ $('bizUps').onclick=e=>{const b=e.target.closest('[data-bl]');if(!b||b.disabled)
 $('bizFill').onclick=()=>{fillBiz(bizOpen);renderBiz()};$('bizClose').onclick=()=>{$('biz').style.display='none';bizOpen=null};
 /* ---- transports ---- */
 function openBus(s){const c=10*(1+tierOf());$('travelT').textContent='Arrêt de bus';$('travelInfo').textContent='Un ticket coûte '+usd(c)+'. Où veux-tu aller ?';$('travelList').innerHTML=MP.STOPS.filter(x=>x!==s).map(x=>`<button class="it" data-bus="${x.id}" ${S.E<c?'disabled':''}><b>${x.name}</b><span class="p">${usd(c)}</span></button>`).join('');$('travel').style.display='grid'}
-function openTrain(){const t=tierOf(),c=20*(1+t);$('travelT').textContent='La gare';$('travelInfo').textContent='Le train relie ton village aux grandes villes. Débloque chaque ville une fois, puis le billet coûte '+usd(c)+'.';
- $('travelList').innerHTML=MAPLIST.filter(m=>m.id!==MP.id).map(m=>{const un=m.id==='home'||S.cities[m.id],lk=!un&&m.unlock.tier>t;
-  return `<button class="it" data-train="${m.id}" ${lk||(!un&&S.E<cc(m.unlock.cost))||(un&&S.E<c)?'disabled':''}><b>${m.name}</b><span class="p">${un?usd(c):lk?'Échelon « '+TIERS[m.unlock.tier][0]+' »':'Débloquer · '+usd(cc(m.unlock.cost))}</span><small>${{normal:'Ton village, ta maison et tes machines.',ancient:'Une cité médiévale : tavernes, catacombes et reliques.',japan:'Une ville japonaise : rizières, jade et saké.',space:'Une station spatiale : cristaux, aliens et météorites.'}[m.theme]}</small></button>`}).join('');$('travel').style.display='grid'}
+function cityProg(m){const P=m.PARCELS,St=m.STORES.filter(x=>x.id!=='main');return{p:P.filter(owned).length,pn:P.length,b:St.filter(bizOwned).length,bn:St.length}}
+function cityDone(m){const r=cityProg(m);return r.p>=r.pn&&r.b>=r.bn}
+function cityOpen(m){if(m.id==='home'||S.cities[m.id])return true;const i=MAPLIST.indexOf(m);return i>0&&cityDone(MAPLIST[i-1])&&(i<2||cityOpen(MAPLIST[i-1]))}
+function openTrain(){$('travelT').textContent='La gare';$('travelInfo').textContent='Le train est gratuit. Pour ouvrir une nouvelle ville, achète tous les terrains et tous les commerces de la ville d’avant.';
+ $('travelList').innerHTML=MAPLIST.filter(m=>m.id!==MP.id).map(m=>{const op=cityOpen(m),pv=MAPLIST[MAPLIST.indexOf(m)-1],r=pv?cityProg(pv):null;
+  return `<button class="it" data-train="${m.id}" ${op?'':'disabled'}><b>${m.name}</b><span class="p">${op?'Gratuit':'&#128274; Fermée'}</span><small>${op?{normal:'Ton village, ta maison et tes machines.',ancient:'Une cité médiévale : tavernes, catacombes et reliques.',japan:'Une ville japonaise : rizières, jade et saké.',space:'Une station spatiale : cristaux, aliens et météorites.'}[m.theme]:'Pour l’ouvrir, à '+pv.name+' : terrains '+r.p+'/'+r.pn+' · commerces '+r.b+'/'+r.bn}</small></button>`}).join('');$('travel').style.display='grid'}
 $('travelList').onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
  if(b.dataset.bus){const s=MP.STOPS.find(x=>x.id===b.dataset.bus),c=10*(1+tierOf());if(S.E<c)return;S.E-=c;S.px=s.x*T;S.py=s.y*T+44;target=null;autoAct=null;camInit=false;$('travel').style.display='none';news('Bienvenue : '+s.name);sfx('buy')}
- else if(b.dataset.train){const m=MAPS[b.dataset.train],c=20*(1+tierOf());if(m.id!=='home'&&!S.cities[m.id]){if(S.E<cc(m.unlock.cost))return;S.E-=cc(m.unlock.cost);S.cities[m.id]=1;unlockAch('city'+m.id);sfx('fanfare')}else{if(S.E<c)return;S.E-=c}
+ else if(b.dataset.train){const m=MAPS[b.dataset.train];if(!cityOpen(m))return;if(m.id!=='home'&&!S.cities[m.id]){S.cities[m.id]=1;unlockAch('city'+m.id);sfx('fanfare')}
   $('travel').style.display='none';travelTo(m.id)}};
 $('travelClose').onclick=()=>$('travel').style.display='none';
 function travelTo(id){clearActors();Object.values(coAv).forEach(a=>disposeObj(a.g));coAv={};switchMap(id);const a=MP.arrive;S.px=a.x*T;S.py=a.y*T;target=null;autoAct=null;camInit=false;S.map=id;banner(MP.name,MP.id==='home'?'De retour chez toi':'Nouvelle ville à conquérir');save(true)}
@@ -1616,7 +1619,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-17';
+const GAME_VERSION='web-18';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
