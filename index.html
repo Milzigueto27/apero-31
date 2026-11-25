@@ -885,10 +885,11 @@ function sell(l,mul){const g=l*S.price*(mul||1)*repPrice();S.E+=g;S.del+=l;S.tod
 function storeMult(st){return st.night*dark+st.day*(1-dark)}
 function custMult(st){const t=tierOf(),main=st.id==='main',pub=main?1:BPUB[bizLv(st.id,'pub')];return S.cust*(1+S.pubB)*(1+t*.4)*pub*storeMult(st)*wxCust()*(main&&S.evT>0?3:1)*(S.happy&&isNight()?2:1)*(main?1:.7)*repMul()}
 const NPCMAX=30;
-function updateNPC(dt){const t=tierOf();let total=NPC.length;
- MP.STORES.forEach(st=>{if(!bizOwned(st))return;const main=st.id==='main';ACC[st.id]=(ACC[st.id]||0)+dt*.22*custMult(st);const maxN=main?6+t*2+S.maxExtra:4+t+bizLv(st.id,'pub')*2,cur=NPC.filter(n=>n.sid===st.id).length;
+function updateNPC(dt){const t=tierOf();let total=NPC.length;const TH=ANIM.filter(a=>a.st!=='flee'&&ANIMT[a.k]&&(ANIMT[a.k].atk>0||a.var!=='day'));
+ MP.STORES.forEach(st=>{if(!bizOwned(st))return;{const sb=MP.BID[st.b];if(sb&&TH.some(a=>Math.hypot(a.x-sb.dx,a.y-sb.dy)<450)){ACC[st.id]=0;return}}const main=st.id==='main';ACC[st.id]=(ACC[st.id]||0)+dt*.22*custMult(st);const maxN=main?6+t*2+S.maxExtra:4+t+bizLv(st.id,'pub')*2,cur=NPC.filter(n=>n.sid===st.id).length;
   while(ACC[st.id]>1){ACC[st.id]--;if(cur<maxN&&total<NPCMAX){spawnNPC(st.id);total++}}});
- NPC.forEach(n=>{if(n.st==='shop'){n.wait-=dt;if(n.wait<=0){const st=SID[n.sid],tm=n.look.tourist?1.5:n.look.kid?.4:1,want=Math.max(1,Math.round((1+Math.random()*3)*BUYMULT[t]*S.buy*tm)),got=Math.min(want,Math.floor(bizShelf(st)));
+ NPC.forEach(n=>{if(!n.scared&&TH.length){const a=TH.find(a=>Math.hypot(a.x-n.x,a.y-n.y)<230);if(a){n.scared=1;n.sad=1;n.mood='Au secours, un '+a.name+' !';n.sp*=1.8;S.rep=Math.max(.5,S.rep-.01);S.stats.sad++;S.today.sad++;if(n.st==='shop'){n.st='out';n.dir=-1;n.i=n.path.length-2;n.g.visible=true;return}else if(n.st!=='out'){n.st='out';n.dir=-1;n.i=Math.max(0,n.i-1)}if(!window._scT||performance.now()-window._scT>8000){window._scT=performance.now();news('Un '+a.name+' fait fuir tes clients ! Chasse-le vite');sfx('alert')}}}
+  if(n.st==='shop'){n.wait-=dt;if(n.wait<=0){const st=SID[n.sid],tm=n.look.tourist?1.5:n.look.kid?.4:1,want=Math.max(1,Math.round((1+Math.random()*3)*BUYMULT[t]*S.buy*tm)),got=Math.min(want,Math.floor(bizShelf(st)));
     const b=MP.BID[st.b];if(got>0){setShelf(st,bizShelf(st)-got);const g=sell(got,st.price*(st.id==='main'?1:BDECO[bizLv(st.id,'deco')]));n.bag=got;n.happy=got>=want;S.stats.served++;S.today.served++;if(S.stats.served>=100)unlockAch('c100');S.rep=Math.min(5,S.rep+(got>=want?.012:-.006));if(S.rep>=5)unlockAch('rep5');
      pop(b.dx,b.dy,'+'+usd(g),'#f6d77c',6,'#f6d77c');if(Math.hypot(S.px-b.dx,S.py-b.dy)<500){sfx('coin');coinBurst(b.dx,b.dy,3)}if(!n.happy)n.mood='Pas assez…'}else{n.mood='Plus rien… déçu !';n.sad=1;S.rep=Math.max(.5,S.rep-.07);S.stats.sad++;S.today.sad++;if(Math.hypot(S.px-b.dx,S.py-b.dy)<600)sfx('sad')}
     n.st='out';n.dir=-1;n.i=n.path.length-2;n.g.visible=true}return}
@@ -1591,7 +1592,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-9';
+const GAME_VERSION='web-10';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
