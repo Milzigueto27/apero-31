@@ -262,7 +262,7 @@ const M={
 const UPS=[
  ['panier','Panier en osier','Tu portes 25 fruits.',25,0,s=>s.bagCap=Math.max(s.bagCap,25)],
  ['affiches','Affiches dans le village','+30 % de clients.',60,0,s=>s.cust*=1.3],
- ['ray1','Rayons en plus','Ta boutique stocke 150 L.',80,0,s=>s.shelfCap=Math.max(s.shelfCap,150)],
+ ['ray1','Rayons en plus','L’Ortu stocke 150 L.',80,0,s=>s.shelfCap=Math.max(s.shelfCap,150)],
  ['garage','Agrandir : le garage','Terrain 5×4 pour plus de machines.',120,1,s=>s.plot=Math.max(s.plot,1)],
  ['epouv','Épouvantails','+10 % de protection contre les animaux sur tous tes champs.',150,1,s=>s.prot+=.1],
  ['enseigne','Enseigne lumineuse','+50 % de clients.',200,1,s=>s.cust*=1.5],
@@ -278,7 +278,7 @@ const UPS=[
  ['cave','Agrandir : la cave','Terrain 7×5.',1500,2,s=>s.plot=Math.max(s.plot,2)],
  ['terrasse','Terrasse devant la boutique','+20 % de clients et 4 clients en même temps en plus.',1800,2,s=>{s.cust*=1.2;s.maxExtra+=4}],
  ['radio','Pub à la radio','2× plus de clients.',2000,2,s=>s.cust*=2],
- ['ray2','Grande réserve','Ta boutique stocke 800 L.',2000,2,s=>s.shelfCap=Math.max(s.shelfCap,800)],
+ ['ray2','Grande réserve','L’Ortu stocke 800 L.',2000,2,s=>s.shelfCap=Math.max(s.shelfCap,800)],
  ['fusil','Fusil à bouchons','Chaque coup compte double contre les animaux.',2200,2,s=>s.shoo=2],
  ['camion','Camionnette','Remplit tes rayons depuis ta cave, toute seule.',2500,2,s=>s.auto=true],
  ['meca','Mécanicien','Répare tout seul tes machines en panne en 15 s : avec tes matériaux, sinon il achète les pièces.',2800,2,s=>s.meca=true],
@@ -299,7 +299,7 @@ const UPS=[
  ['bus2','Bus à impériale','Le bus amène 12 touristes, plus souvent.',40000,4,s=>{s.bus=true;s.busLv=Math.max(s.busLv||0,2)}],
  ['busfix','Contrat d’entretien du bus','Le bus tombe 3× moins souvent en panne.',60000,4,s=>s.busFix=true],
  ['commercial','Commercial','Il accepte tout seul les meilleures commandes du tableau.',45000,4,s=>s.commercial=true],
- ['ray3','Entrepôt','Ta boutique stocke 6 000 L.',20000,4,s=>s.shelfCap=Math.max(s.shelfCap,6000)],
+ ['ray3','Entrepôt','L’Ortu stocke 6 000 L.',20000,4,s=>s.shelfCap=Math.max(s.shelfCap,6000)],
  ['etiq','Étiquettes stylées','Le litre se vend encore 2× plus cher.',30000,4,s=>s.price*=2],
  ['tv','Pub à la télé','2× plus de clients.',40000,4,s=>s.cust*=2],
  ['scooter','Scooter','Tu te déplaces 2,2× plus vite.',45000,4,s=>s.speed=Math.max(s.speed,400)],
@@ -307,7 +307,7 @@ const UPS=[
  ['saison','Saisonniers','+40 fruits/s dans tes machines.',60000,4,s=>s.workers+=40],
  ['bus3','Car panoramique','Le bus amène 20 touristes très souvent.',250000,5,s=>{s.bus=true;s.busLv=Math.max(s.busLv||0,3)}],
  ['flotte','Flotte de camions','4 camions, livraisons 2× plus rapides.',180000,5,s=>{s.nTruck=Math.max(s.nTruck||0,4);s.truckFast=true}],
- ['entrepot','Méga-entrepôt','Ta boutique stocke 50 000 L.',150000,5,s=>s.shelfCap=Math.max(s.shelfCap,50000)],
+ ['entrepot','Méga-entrepôt','L’Ortu stocke 50 000 L.',150000,5,s=>s.shelfCap=Math.max(s.shelfCap,50000)],
  ['festival','Festival de l’apéro','2× plus de clients et 6 en même temps en plus.',200000,5,s=>{s.cust*=2;s.maxExtra+=6}],
  ['premium','Marque premium','Le litre se vend 2× plus cher.',250000,5,s=>s.price*=2],
  ['robots','Robots cueilleurs','+200 fruits/s dans tes machines.',300000,5,s=>s.workers+=200],
@@ -373,7 +373,7 @@ const HOME={id:'home',name:'Ton village',theme:'normal',WT:112,HT:80,sea:104,
   ['c5',50,62.5,4,3.5,'',0xf8d8d8,0x8a2a3a],['c6',55,62.5,4,3.5,'',0xe8f0d8,0x4a6a3a],['c7',78,62.5,4,3.5,'',0xf0e0c0,0x7a5a2a],['c8',83,62.5,4,3.5,'',0xd8d8f0,0x3a3a6a],
   ['s_epi',50,52.5,6,4.5,'',0x2e4a3a,0x1a2a22],['s_cave',64,52.5,6,4.5,'',0x5a2a2a,0x2a1414],['s_boite',64,61.5,8,5,'',0x1e1a2a,0x0e0a18],['s_port',89,14,7,4.5,'',0x3a4a5a,0x1a2a3a],['s_super',74,5.5,7,4.5,'',0x6a5a3a,0x3a2a1a],['s_resto',90,39.5,8,5,'',0xe8d8b8,0x2f6a6a]],
  STORES:[
-  {id:'main',b:'store',name:'Ta boutique',houses:['party','h1','h2'],edges:['w'],neon:'#ff5c93',aw:[0xff5c93,0xfff3e6],price:1,night:1,day:1},
+  {id:'main',b:'store',name:'L’Ortu',houses:['party','h1','h2'],edges:['w'],neon:'#ff5c93',aw:[0xff5c93,0xfff3e6],price:1,night:1,day:1},
   {id:'epi',b:'s_epi',name:'Épicerie de nuit',cost:3000,tier:1,price:1.3,night:2,day:.8,houses:['c1','c2','c5','c6','c3'],edges:['s'],neon:'#7fe3ff',aw:[0x2a8a5a,0xfff3e6],desc:'Les clients viennent surtout la nuit.'},
   {id:'cave',b:'s_cave',name:'Cave à vins',cost:8000,tier:2,price:2,night:1,day:1,houses:['c1','c2','c3','c4','c7','c8'],neon:'#f6d77c',aw:[0x7a1f3a,0xf0e0c0],desc:'Clientèle chic : le litre se vend 2× plus cher.'},
   {id:'port',b:'s_port',name:'Bar du port',cost:25000,tier:3,price:1.6,night:1.5,day:1,houses:['q1','q2','q3','q4','k3','k4'],neon:'#4ab0ff',aw:[0x2f557a,0xffffff],desc:'Pêcheurs et marins, encore plus le soir.'},
@@ -635,8 +635,8 @@ function cands(){const L=[],m=MP;
  if(m.id==='home'){S.mach.forEach(mc=>{const d=M[mc.t],n=Math.min(S.bag,Math.floor(d.cap-mc.buf)),x=PX+mc.tx*T+T/2,y=PY+mc.ty*T+T/2;
    if(mc.br){const rq=REPAIR[mc.t],paid=mc.rp>0,can=paid||hasMat(rq)||S.items.kit>0;L.push({x,y,o:mc,label:paid?'Réparation de '+d.name+' : '+mc.rp+'/4 (continue !)':can?'En panne ! Réparer '+d.name+' ('+(hasMat(rq)?matTxt(rq):'1 kit')+', 4 coups)':'En panne : il te faut '+matTxt(rq)+' pour réparer '+d.name,ok:can,act:()=>{if(!mc.rp){if(hasMat(rq))payMat(rq);else S.items.kit--}mc.rp=(mc.rp||0)+1;sfx('mine');pop(x,y,'Clang ! '+mc.rp+'/4','#e8f0f8',8,'#b8b8c0');if(mc.rp>=4){mc.br=0;mc.rp=0;pop(x,y,'Réparé !','#7ddc6a',14,'#fff');sfx('buy')}}});return}
    L.push({x,y,o:mc,label:S.bag<1?d.name+' : '+Math.floor(mc.buf)+'/'+d.cap+' fruits':'Remplir '+d.name+' (+'+n+')',ok:n>0,act:()=>{mc.buf+=n;S.bag-=n;pop(x,y,'+'+n,'#f6d77c',8,'#ff5c93');sfx('pick')}})});
-  const h=m.BID.home,ld=Math.floor(Math.min(S.stock,S.crateCap-S.crate));if(m.id==='home'){L.push({x:h.dx+70,y:h.dy-10,o:'house',label:'Entrer dans ta maison',ok:true,act:()=>enterHouse()});L.push({x:FSTAND.x,y:FSTAND.y+30,o:'fstand',label:'Poissonnerie : vendre tes poissons',ok:true,act:openFishStand})}
-  L.push({x:h.dx,y:h.dy,o:h,label:S.stock<1?'Ta cave est vide, tes machines la remplissent':ld<1?'Tes bras sont pleins, va remplir un commerce':'Charger '+fmt(ld)+' L depuis ta cave',ok:ld>0,act:()=>loadCrate(h.dx,h.dy)});
+  const h=m.BID.home,ld=Math.floor(Math.min(S.stock,S.crateCap-S.crate));if(m.id==='home'){L.push({x:FSTAND.x+48,y:FSTAND.y,o:'fstand',label:'Poissonnerie : vendre tes poissons',ok:true,act:openFishStand})}
+  L.push({x:h.dx,y:h.dy-8,o:'house',label:'Entrer dans ta maison (la cave à vin est dedans)',ok:true,act:()=>enterHouse()});
   const st=m.BID.store,evc=Math.round(40*BUYMULT[tierOf()]);
   L.push({x:st.x+.9*T,y:st.y+st.h+30,o:'board',label:S.evT>0?'Soirée dégustation en cours !':S.evCD>0?'Prochaine dégustation dans '+Math.ceil(S.evCD)+' s':'Lancer une soirée dégustation ('+usd(evc)+', 3× plus de clients)',ok:S.evT<=0&&S.evCD<=0&&S.E>=evc,
    act:()=>{S.E-=evc;S.evT=45;S.evCD=200;news('Soirée dégustation ! Les clients affluent');pop(st.dx,st.dy,'Dégustation !','#ff5c93',20,'#f6d77c');sfx('buy')}});
@@ -654,7 +654,7 @@ function cands(){const L=[],m=MP;
   const ld=Math.floor(Math.min(S.stock,S.crateCap-S.crate));L.push({x:dep.dx,y:dep.dy,o:dep,label:S.bag>0?'Envoyer '+S.bag+' fruits à tes machines':ld>0?'Charger '+fmt(ld)+' L (ta cave)':'Dépôt : rien à envoyer ni à charger',ok:S.bag>0||ld>0,act:()=>{if(S.bag>0){S.silo+=S.bag;pop(dep.dx,dep.dy,'+'+S.bag+' fruits envoyés','#7ddc6a',10,'#fff');S.bag=0;sfx('pick')}else loadCrate(dep.dx,dep.dy)}})}
  m.STORES.forEach(st=>{const b=m.BID[st.b];if(!bizOwned(st)){const lk=st.tier>tierOf();L.push({x:b.dx,y:b.dy,o:st,label:lk?st.name+' à vendre : échelon « '+TIERS[st.tier][0]+' » requis':'Acheter '+st.name+' ('+usd(cc(st.cost))+')',ok:!lk&&S.E>=cc(st.cost),act:()=>buyBiz(st)});return}
   const room=Math.floor(Math.min(S.crate,bizCap(st)-bizShelf(st)));
-  if(st.id==='main')L.push({x:b.dx,y:b.dy,o:st,label:S.crate<1?'Ta boutique : '+fmt(S.shelf)+'/'+fmt(S.shelfCap)+' L en rayon':room<1?'Rayons pleins, attends les clients ou agrandis ta réserve':'Remplir les rayons (+'+fmt(room)+' L)',ok:room>=1,act:()=>fillBiz(st)});
+  if(st.id==='main')L.push({x:b.dx,y:b.dy,o:st,label:S.crate<1?'L’Ortu : '+fmt(S.shelf)+'/'+fmt(S.shelfCap)+' L en rayon':room<1?'Rayons pleins, attends les clients ou agrandis ta réserve':'Remplir les rayons (+'+fmt(room)+' L)',ok:room>=1,act:()=>fillBiz(st)});
   else L.push({x:b.dx,y:b.dy,o:st,label:room>=1?'Remplir '+st.name+' (+'+fmt(room)+' L)':'Gérer '+st.name+' ('+fmt(bizShelf(st))+'/'+fmt(bizCap(st))+' L)',ok:true,act:()=>room>=1?fillBiz(st):openBiz(st)})});
  m.PARCELS.forEach(p=>{if(owned(p))return;const sg=parcelSign(p),lk=p.tier>tierOf();L.push({x:sg.x,y:sg.y,o:p,label:lk?p.name+' : échelon « '+TIERS[p.tier][0]+' » requis':'Acheter : '+p.name+' ('+usd(cc(p.cost))+')',ok:!lk&&S.E>=cc(p.cost),act:()=>buyParcel(p)})});
  if(m===HOME)seaAlive().forEach(o=>{const n=Math.ceil(o.hp/meleeDmg());L.push({x:o.x,y:o.y,o,label:'Frapper : '+o.name+' ('+n+' coup'+(n>1?'s':'')+')',ok:true,act:()=>{SWING=.4;LASTSW=Date.now();hitSea(o,meleeDmg());if(held()==='sword'&&gi('sword')>=0)wear('sword',1)}})});
@@ -740,8 +740,8 @@ function exitMine(forced){if(!MINE)return;const s=S.surf;MINE=null;CAVEC=null;ex
 /* ---- intérieur de la maison : lit (réapparition), armoire à habits, armoire de rangement ---- */
 const HW=14,HH=10,HFURN={bed:[[1,1],[2,1],[1,2],[2,2],[1,3],[2,3]],ward:[[9,1],[10,1]],chest:[[11,1],[12,1]],table:[[6,4],[7,4]]};
 function houseLevel(){const g=new Uint8Array(HW*HH);for(let y=0;y<HH;y++)for(let x=0;x<HW;x++)g[y*HW+x]=(x===0||y===0||x===HW-1||y===HH-1)?1:0;Object.values(HFURN).forEach(L=>L.forEach(([x,y])=>g[y*HW+x]=1));return{W:HW,H:HH,g,entry:8*HW+7,down:null,nodes:[],bats:[],mons:[],bodies:[],torches:[],cave:null,depth:0}}
-function enterHouse(bed){if(MINE)return;S.surf={x:S.px,y:S.py,map:MP.id};MINE={house:1,cave:{id:'house_'+(FARM?FARM.uid:'me'),name:'Ta maison',depth:0,ores:[['bois',1]]},depth:0,lv:houseLevel()};
- if(bed){S.px=3.5*T;S.py=2.5*T}else{S.px=7.5*T;S.py=8.3*T}target=null;autoAct=null;camInit=false;clearActors();buildHouseScene();if(!bed)news('Bienvenue chez toi !');sfx('pick')}
+function enterHouse(bed){if(MINE)return;DOORARM=false;S.surf={x:S.px,y:S.py,map:MP.id};MINE={house:1,cave:{id:'house_'+(FARM?FARM.uid:'me'),name:'Ta maison',depth:0,ores:[['bois',1]]},depth:0,lv:houseLevel()};
+ HDOOR=false;if(bed){S.px=3.5*T;S.py=2.5*T}else{S.px=7.5*T;S.py=7.9*T}target=null;autoAct=null;camInit=false;clearActors();buildHouseScene();if(!bed)news('Bienvenue chez toi !');sfx('pick')}
 function buildHouseScene(){exitMineScene();const g=new THREE.Group();mineG=g;MAPLIST.forEach(x=>{if(x.group)x.group.visible=false});
  const fl=new THREE.Mesh(new THREE.PlaneGeometry(HW-2,HH-2),tmat(0xb07a4a));fl.rotation.x=-Math.PI/2;fl.position.set(HW/2,0,HH/2);fl.receiveShadow=true;g.add(fl);
  for(let i=1;i<HH-1;i++)g.add(box(tmat(i%2?0x9a6a3a:0xa87444),HW-2,.02,.06,HW/2,.01,i));
@@ -758,10 +758,17 @@ function buildHouseScene(){exitMineScene();const g=new THREE.Group();mineG=g;MAP
  // table et chaises
  g.add(box(tmat(0x8a5a3a),2,.1,1.2,7,.75,4.5));[[6.2,4],[7.8,4],[6.2,5],[7.8,5]].forEach(([x,z])=>g.add(box(tmat(0x6a3a1a),.1,.7,.1,x,.35,z)));g.add(mesh(G.cyl,tmat(0xf6d77c,{emissive:0xf6a030,emissiveIntensity:.8}),.12,.3,.12,7,.95,4.5));
  [[5.6,4.5],[8.4,4.5]].forEach(([x,z])=>{g.add(box(tmat(0x9a6a3a),.5,.08,.5,x,.45,z));g.add(box(tmat(0x9a6a3a),.08,.6,.5,x+(x<7?-.22:.22),.75,z))});
+ // trappe de la cave à vin
+ g.add(box(tmat(0x5a3a1a),1.3,.05,1.3,3,.03,7));g.add(box(tmat(0x3a2410),1.1,.06,.08,3,.05,6.7));g.add(box(tmat(0x3a2410),1.1,.06,.08,3,.05,7.3));g.add(mesh(G.torus,tmat(0xb0a080),.15,.15,.15,3.35,.07,7));for(let i=0;i<3;i++)g.add(mesh(G.cyl,tmat(0x6a3a1a),.28,.5,.28,1.5,.25,6.3+i*.6));
  // plante et lampe
  g.add(mesh(G.cyl,tmat(0xc86a3a),.3,.4,.3,12.3,.2,7.8));g.add(mesh(G.sph,tmat(0x3a8a3a),.55,.6,.55,12.3,.8,7.8));
  scene.add(g)}
+let DOORARM=true,HDOOR=true;
+function doorCheck(){if(!S||!running)return;if(!MINE&&MP===HOME){const h=HOME.BID.home,d=Math.hypot(S.px-h.dx,S.py-h.dy);if(d>60)DOORARM=true;else if(d<30&&DOORARM&&S.moving&&!anyModal()){DOORARM=false;enterHouse()}}
+ else if(MINE&&MINE.house){if(S.py<7.4*T)HDOOR=true;if(S.py>8.55*T&&Math.abs(S.px-7.5*T)<T&&HDOOR&&S.moving){HDOOR=false;exitMine()}
+  const cx=3*T,cy=7*T,d=Math.hypot(S.px-cx,S.py-cy);if(d<34){S._cv=(S._cv||0)+1;const ld=Math.floor(Math.min(S.stock,S.crateCap-S.crate));if(ld>=1&&S._cv%20===1){loadCrate(cx,cy)}else if(S._cv===1)news(S.stock<1?'La cave est vide : tes machines la remplissent':S.crate>=S.crateCap?'Tes bras sont pleins : va remplir L’Ortu':'')}else S._cv=0}}
 function houseCands(){const L=[];L.push({x:7.5*T,y:8.5*T,o:'up',label:'Sortir de la maison',ok:true,act:()=>exitMine()});
+ {const ld=Math.floor(Math.min(S.stock,S.crateCap-S.crate));L.push({x:3*T,y:7*T,o:'cellar',label:S.stock<1?'Cave à vin : vide, tes machines la remplissent':ld<1?'Cave à vin : tes bras sont pleins':'Cave à vin : charger '+fmt(ld)+' L (mets-toi sur la trappe)',ok:ld>0,act:()=>loadCrate(3*T,7*T)})}
  L.push({x:3.5*T,y:2.5*T,o:'bed',label:S.hp<S.hpMax?'Dormir un peu (vie restaurée)':'Ton lit · tu reviens ici si tu es K.O.',ok:true,act:()=>{if(S.hp<S.hpMax){S.hp=S.hpMax;banner('Bonne sieste !','Vie restaurée · tu te réveilleras ici si tu es K.O.');sfx('fanfare')}else news('Ton lit : tu réapparais ici quand tu es K.O.')}});
  L.push({x:10*T,y:2.5*T,o:'ward',label:'Armoire à habits : changer de tenue',ok:true,act:openWardrobe});
  L.push({x:12*T,y:2.5*T,o:'chest',label:'Armoire de rangement ('+chestUsed()+'/'+chestSlots()+' places)',ok:true,act:openChest});return L}
@@ -783,11 +790,13 @@ function chestClick(b){const C=chest();if(b.dataset.chu){const nx=CHL[C.lv+1];if
  openChest();save(true)}
 /* ---- poissonnerie du port ---- */
 const FSTAND={x:100.5*T,y:23.6*T};const fishPrice=k=>Math.round(MATN[k][3]*1.5*(1+tierOf()*.1));
-function makeFishStand(){const g=new THREE.Group(),x=U(FSTAND.x),z=U(FSTAND.y)-.4;g.add(box(tmat(0x8a5a3a),2.6,.9,1,x,.45,z));g.add(box(tmat(0xe8f4f8),2.5,.06,.9,x,.92,z));
- [[-.9],[.9]].forEach(([o])=>g.add(box(tmat(0x6a4a2a),.1,2.2,.1,x+o*1.3,1.1,z-.45)));for(let i=0;i<5;i++)g.add(box(tmat(i%2?0x2f7ab0:0xffffff),.56,.08,1.4,x-1.12+i*.56,2.22,z-.1));
- const fc=[0xa8c0d0,0x5a8aa0,0xd8a0a0,0x8ab0c0,0xc04a4a];for(let i=0;i<5;i++){const f=mesh(G.sph,tmat(fc[i]),.22,.07,.09,x-.9+i*.45,1,z+.1);g.add(f)}
- const sg=new THREE.Mesh(new THREE.PlaneGeometry(2.2,.55),new THREE.MeshBasicMaterial({map:(()=>{const c=document.createElement('canvas');c.width=256;c.height=64;const q=c.getContext('2d');q.fillStyle='#2f557a';q.fillRect(0,0,256,64);q.fillStyle='#fff';q.font='bold 34px Nunito,sans-serif';q.textAlign='center';q.fillText('POISSONNERIE',128,45);return new THREE.CanvasTexture(c)})()}));sg.position.set(x,2.55,z+.2);g.add(sg);
- const p=makePerson(LOOKS.peche);p.position.set(x,0,z-.9);g.add(p);return g}
+function makeFishStand(){const g=new THREE.Group();g.add(box(tmat(0x8a5a3a),2.6,.9,1,0,.45,0));g.add(box(tmat(0xe8f4f8),2.5,.06,.9,0,.92,0));
+ [[-1],[1]].forEach(([o])=>g.add(box(tmat(0x6a4a2a),.1,2.2,.1,o*1.2,1.1,-.45)));for(let i=0;i<5;i++)g.add(box(tmat(i%2?0x2f7ab0:0xffffff),.56,.08,1.4,-1.12+i*.56,2.22,-.1));
+ const fc=[0xa8c0d0,0x5a8aa0,0xd8a0a0,0x8ab0c0,0xc04a4a];for(let i=0;i<5;i++)g.add(mesh(G.sph,tmat(fc[i]),.22,.07,.09,-.9+i*.45,1,.1));
+ const tx=(()=>{const c=document.createElement('canvas');c.width=256;c.height=64;const q=c.getContext('2d');q.fillStyle='#2f557a';q.fillRect(0,0,256,64);q.fillStyle='#fff';q.font='bold 34px Nunito,sans-serif';q.textAlign='center';q.fillText('POISSONNERIE',128,45);return new THREE.CanvasTexture(c)})();
+ const sg=new THREE.Mesh(new THREE.PlaneGeometry(2.2,.55),new THREE.MeshBasicMaterial({map:tx,side:THREE.DoubleSide}));sg.position.set(0,2.55,.3);g.add(sg);
+ const p=makePerson({shirt:0x2f557a,pants:0x3a3a3a,skin:0xe8b48a,hair:0x4a3020,style:'short',beard:1,apron:1,hat:'cap',hatCol:0x2f557a});p.position.set(0,0,-.9);g.add(p);
+ g.position.set(U(FSTAND.x),0,U(FSTAND.y));g.rotation.y=Math.PI/2;return g}
 function openFishStand(){const fs=FISHK.filter(k=>ore(k)>=1),tot=fs.reduce((a,k)=>a+Math.floor(ore(k))*fishPrice(k),0);$('travelT').textContent='Poissonnerie du port';$('travelInfo').textContent='Le poissonnier rachète tes poissons 50 % plus cher que les marchands.';
  $('travelList').innerHTML=(fs.length?`<div class="row"><button class="btn sm" data-fsa="1">Tout vendre · ${usd(tot)}</button></div>`+fs.map(k=>{const n=Math.floor(ore(k));return `<div class="tr"><span><b>${MATN[k][1]}</b> · ${n} · ${usd(fishPrice(k))} pièce</span><button class="btn ghost sm" data-fs="${k}" data-n="1">Vendre 1</button><button class="btn ghost sm" data-fs="${k}" data-n="all">Tout (${usd(n*fishPrice(k))})</button></div>`}).join(''):'<p>Tu n’as pas de poisson. Va pêcher au bout du ponton !</p>');$('travel').style.display='grid'}
 function fishClick(b){const sell=(k,n)=>{n=Math.min(n,Math.floor(ore(k)));if(n<1)return 0;S.ore[k]-=n;const g=n*fishPrice(k);S.E+=g;return g};let g=0;if(b.dataset.fsa)FISHK.forEach(k=>g+=sell(k,Math.floor(ore(k))));else g=sell(b.dataset.fs,b.dataset.n==='all'?1e9:1);if(g){sfx('coin');pop(S.px,S.py-30,'+'+usd(g),'#f6d77c',10,'#f6d77c')}openFishStand();save(true)}
@@ -1031,7 +1040,7 @@ function update(dt){
  if(S.evT>0)S.evT-=dt;if(S.evCD>0)S.evCD-=dt;if(S.flyCD>0)S.flyCD-=dt}
  if(MINE)updateMine(dt);else if(iOwnMap()){updateNPC(dt);updateBus(dt);updateAnimals(dt)}else puppetStep(dt);
  if(HOSTSIM()){remoteSales(dt);updateWeather(dt);updateOrders(dt)}else S.snowC=Math.max(0,Math.min(1,(S.snowC||0)+(S.wx.k==='snow'?dt/80:-dt/60)));updateCoop(dt);
- updateHP(dt);updateFish(dt);updateSea(dt);renderTrucks();
+ updateHP(dt);updateFish(dt);updateSea(dt);doorCheck();renderTrucks();
  S.time+=dt;if(S.time>=DAY){S.time-=DAY;if(HOSTSIM())dayEnd()}
  const rk=RANKS.reduce((a,r,i)=>S.del>=r[0]?i:a,0);if(rk>S.rank){S.rank=rk;banner(RANKS[rk][1],'Nouveau palier !');if(!MINE)fireworks(S.px,S.py-120);save(true)}
  const ti=tierOf();if(ti>(S.lastTier||0)){S.lastTier=ti;if(ti>0){banner('Échelon '+(ti+1)+' : '+TIERS[ti][0],'De nouveaux achats au Bricolo');sfx('fanfare')}}
@@ -1450,7 +1459,7 @@ function rebuildParcels(m){if(!m.group)return;if(m.parcelG){m.group.remove(m.par
  pg.traverse(o=>{if(o.isMesh){o.castShadow=QL>0;o.receiveShadow=true}});m.group.add(pg);
  if(m.cropG){m.group.remove(m.cropG);freeGroup(m.cropG)}const cg=new THREE.Group();m.cropG=cg;SRC.forEach(s=>{if(s.map!==m.id)return;const k=KINDS[s.kind];s.fr=null;s.im=null;s.im2=null;s.canopy=null;cg.add(k.t==='tree'?makeTree(s):k.t==='vine'?makeVine(s):makeField(s));s.lastF=-1});m.group.add(cg)}
 let BOARDM=[],POSTER;
-function posterTex(){const c=document.createElement('canvas');c.width=256;c.height=160;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,256,160);gr.addColorStop(0,'#ff5c93');gr.addColorStop(1,'#8f1f4c');g.fillStyle=gr;g.fillRect(0,0,256,160);g.fillStyle='#f6d77c';g.font='bold 34px "Lilita One",sans-serif';g.textAlign='center';g.fillText('TA BOUTIQUE',128,62);g.fillStyle='#fff';g.font='bold 22px Nunito,sans-serif';g.fillText('Le meilleur apéro',128,100);g.fillText('de la région !',128,128);return new THREE.CanvasTexture(c)}
+function posterTex(){const c=document.createElement('canvas');c.width=256;c.height=160;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,256,160);gr.addColorStop(0,'#ff5c93');gr.addColorStop(1,'#8f1f4c');g.fillStyle=gr;g.fillRect(0,0,256,160);g.fillStyle='#f6d77c';g.font='bold 34px "Lilita One",sans-serif';g.textAlign='center';g.fillText('L’ORTU',128,62);g.fillStyle='#fff';g.font='bold 22px Nunito,sans-serif';g.fillText('Le meilleur apéro',128,100);g.fillText('de la région !',128,128);return new THREE.CanvasTexture(c)}
 function refreshBoards(){BOARDM.forEach((m,i)=>{m.material=S&&S.posters[i]?POSTER:mat(0xf0e8d8)})}
 let SEAM=null,BOATS=[],CHARM=[],SNOWG=null,STARS=null,DOG=null,PLAYER=null,WORK=[],CLOUDS=null,FLY,FW,FWP,FWC,FWD=[],RAIN,RAINP,SNOW,SNOWP;
 function inst(grp,geo,m,list,shadow=true){if(!list.length)return;const im=new THREE.InstancedMesh(geo,m,list.length);const d=new THREE.Object3D();list.forEach((t,i)=>{d.position.set(t[0],t[1],t[2]);d.scale.set(t[3],t[4],t[5]);d.rotation.set(0,t[6]||0,0);d.updateMatrix();im.setMatrixAt(i,d.matrix)});im.castShadow=shadow;im.receiveShadow=true;grp.add(im)}
@@ -1867,7 +1876,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-30';
+const GAME_VERSION='web-31';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
