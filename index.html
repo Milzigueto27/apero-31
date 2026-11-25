@@ -971,7 +971,7 @@ function hud(dt){hudT-=dt;if(hudT>0)return;hudT=.1;const t=tierOf(),h=hourOf();
  $('hEv').textContent=S.evT>0?'Clients ×'+(S.evT>40?3:2)+' : '+Math.ceil(S.evT)+' s':S.happy&&isNight()?'Happy hour en cours':S.cafeT>0?'Café : '+Math.ceil(S.cafeT)+' s':'';
  $('hMi').textContent=S.mission?'Mission : '+S.mission.name+(S.mission.k==='chat'?'':' · '+S.mission.pts.filter(p=>p.done).length+'/'+S.mission.pts.length)+(S.mission.until?' · reste '+Math.max(0,Math.ceil((S.mission.until-nowMin())*DAY/1440))+' s':'')+' · '+usd(S.mission.rw):'';
  $('hTodo').textContent='À faire : '+todo()[0];
- const c=nearest(S.px,S.py,62),tg=!FISH?shootTarget():null;$('prompt').textContent=FISH?(FISH.st==='bite'?'Ça mord ! Appuie vite !':'Tu pêches… attends que ça morde (Action pour ranger)'):tg?'Tirer une flèche sur : '+(tg.n||tg.name)+' ('+S.items.fleche+' flèches)':c?c.label:'';$('act').classList.toggle('dim',!FISH&&!tg&&!(c&&c.ok)&&!(S.pending.length&&MP.id==='home'));$('act').textContent=FISH?'Ferrer':tg?'Tirer':'Action';$('hH').textContent=Math.ceil(S.hp);$('pH').style.color=S.hp<S.hpMax*.3?'#ff5c93':'';
+ const c=nearest(S.px,S.py,62),tg=!FISH?shootTarget():null;$('prompt').textContent=FISH?(FISH.st==='bite'?'Ça mord ! Appuie vite !':'Tu pêches… attends que ça morde (Action pour ranger)'):tg?'Tir automatique sur : '+(tg.n||tg.name)+' ('+S.items.fleche+' flèches)':c?c.label:'';$('act').classList.toggle('dim',!FISH&&!tg&&!(c&&c.ok)&&!(S.pending.length&&MP.id==='home'));$('act').textContent=FISH?'Ferrer':tg?'Tirer':'Action';$('hH').textContent=Math.ceil(S.hp);$('pH').style.color=S.hp<S.hpMax*.3?'#ff5c93':'';
  const pl=$('place');if(S.pending.length&&MP.id==='home'&&!MINE){pl.style.display='block';pl.textContent='À installer : '+M[S.pending[0]].name+'. Touche une case de ton terrain, ou mets-toi dessus et appuie sur Action.'}else pl.style.display='none'}
 function banner(t,s){$('banT').textContent=t;$('banS').textContent=s||'';const b=$('banner');b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),2600);confetti(60)}
 function unlockAch(id){if(!S||S.ach[id])return;S.ach[id]=1;const a=ACH.find(x=>x[0]===id);$('achT').textContent='Succès : '+a[1];$('achS').textContent=a[2];const e=$('ach');e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),3500);sfx('mission')}
@@ -1464,10 +1464,10 @@ function updateHP(dt){if(S.hp<S.hpMax&&performance.now()-hurtT>6000)S.hp=Math.mi
  if(!MINE)ANIM.forEach(a=>{if(a.st!=='atk')return;const at=ANIMT[a.k];if(!at||!at.atk)return;a.bite=(a.bite||0)-dt;if(Math.hypot(a.x-S.px,a.y-S.py)<38&&a.bite<=0){a.bite=1.1;hurt(animDmg(a),a.name)}})}
 const animDmg=a=>ANIMT[a.k].atk*(a.var==='day'?1:1.5)*(1+tierOf()*.2);
 /* ---- tir à l'arc ---- */
-let SHOTS=[],SWING=0,HANDS=null,LASTSW=0,BOWT=0,CAVEC=null;
+let SHOTS=[],SWING=0,HANDS=null,LASTSW=0,BOWT=0,CAVEC=null,AUTOB=0;
 const HOTK=['sword','bow','pick'];let HOT=0;try{HOT=Math.max(0,Math.min(2,+(localStorage.getItem('om_hot')||0)))}catch(e){}
 const held=()=>FISH?'rod':HOTK[HOT];
-function setHot(i){HOT=i;try{localStorage.setItem('om_hot',i)}catch(e){}renderHot();sfx('pick');const k=HOTK[i];news(k==='sword'?(gi('sword')>=0?gearName('sword')+' en main':'Pas d’épée : tu te bats à mains nues (forge du Bricolo)'):k==='bow'?(gi('bow')>=0?gearName('bow')+' en main · '+(S.items.fleche||0)+' flèches':'Pas d’arc : fabrique-le à la forge'):gearName('pick')+' en main')}
+function setHot(i){HOT=i;try{localStorage.setItem('om_hot',i)}catch(e){}renderHot();sfx('pick');const k=HOTK[i];news(k==='sword'?(gi('sword')>=0?gearName('sword')+' en main':'Pas d’épée : tu te bats à mains nues (forge du Bricolo)'):k==='bow'?(gi('bow')>=0?gearName('bow')+' en main · '+(S.items.fleche||0)+' flèches · tir automatique':'Pas d’arc : fabrique-le à la forge'):gearName('pick')+' en main')}
 function renderHot(){const hb=$('hotbar');if(!hb||!S)return;hb.querySelectorAll('button').forEach((b,i)=>{const k=HOTK[i],gi0=gi(k),g=S.gear&&S.gear[k],L=GEAR[k].L;b.classList.toggle('on',i===HOT);b.classList.toggle('no',gi0<0);const bar=b.querySelector('b');if(gi0<0||!g||g.d<0){bar.style.display=gi0>=0?'block':'none';bar.style.width='';bar.style.background='#7ddc6a';bar.style.right='5px'}else{const f=Math.max(0,Math.min(1,g.d/L[gi0][4]));bar.style.display='block';bar.style.right=(5+34*(1-f))+'px';bar.style.background=f>.5?'#7ddc6a':f>.2?'#f6c432':'#ff5c93'}b.title=GEAR[k].n+' : '+gearName(k)})}
 document.getElementById('hotbar').addEventListener('click',e=>{const b=e.target.closest('[data-h]');if(!b)return;e.stopPropagation();setHot(+b.dataset.h)});
 addEventListener('keydown',e=>{if(!running||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.code==='Digit1')setHot(0);else if(e.code==='Digit2')setHot(1);else if(e.code==='Digit3')setHot(2)});
@@ -1491,7 +1491,7 @@ function poseHands(H,P,lit,si,sw,t,hk,hi,bw){const A=P.userData.arms;H.tg.visibl
  H.sg.visible=si>=0;if(si!==H.si){H.si=si;if(si>=0)H.bm.color.setHex(SWCOL[Math.min(si,SWCOL.length-1)])}
  if(sw>0){const p=1-sw/.4;A[1].rotation.x=p<.35?-2.6*(p/.35):-2.6+3.1*((p-.35)/.65);A[1].rotation.z=-.25*Math.sin(p*Math.PI)}else A[1].rotation.z=0}
 function makeHands(){HANDS=makeHandsFor(PLAYER)}
-function updateHands(dt,t){if(!HANDS)return;if(SWING>0)SWING=Math.max(0,SWING-dt);if(BOWT>0)BOWT=Math.max(0,BOWT-dt);const hk=held();poseHands(HANDS,PLAYER,gi('lamp')>=0&&(MINE||dark>.45),hk==='sword'?gi('sword'):-1,hk==='bow'?0:SWING,t,hk,hk==='rod'?0:gi(hk),BOWT)}
+function updateHands(dt,t){if(!HANDS)return;if(SWING>0)SWING=Math.max(0,SWING-dt);if(BOWT>0)BOWT=Math.max(0,BOWT-dt);if(AUTOB>0)AUTOB-=dt;if(AUTOB<=0&&running&&!anyModal()&&S.hp>0){const tg=shootTarget();if(tg){shoot(tg);AUTOB=Math.max(.22,.55-gi('bow')*.08)}else AUTOB=.1}const hk=held();poseHands(HANDS,PLAYER,gi('lamp')>=0&&(MINE||dark>.45),hk==='sword'?gi('sword'):-1,hk==='bow'?0:SWING,t,hk,hk==='rod'?0:gi(hk),BOWT)}
 function drawMineMini(){const lv=MINE.lv,W=lv.W,H=lv.H,cw=mini.width,ch=mini.height,sx=cw/W,sy=ch/H;
  if(!lv.miniC){const c=document.createElement('canvas');c.width=cw;c.height=ch;const x=c.getContext('2d');x.fillStyle='#120e0b';x.fillRect(0,0,cw,ch);x.fillStyle='#8a7058';for(let jj=0;jj<H;jj++)for(let ii=0;ii<W;ii++)if(!lv.g[jj*W+ii])x.fillRect(ii*sx,jj*sy,sx+.6,sy+.6);lv.miniC=c}
  mg.drawImage(lv.miniC,0,0);const P=(px,py,r,col)=>{mg.fillStyle=col;mg.beginPath();mg.arc(px/T*sx,py/T*sy,r,0,7);mg.fill()};
@@ -1503,7 +1503,7 @@ function drawMineMini(){const lv=MINE.lv,W=lv.W,H=lv.H,cw=mini.width,ch=mini.hei
 function shootTarget(){if(held()!=='bow'||gi('bow')<0||!(S.items.fleche>0))return null;let b=null,bd=380;
  const L=MINE?MINE.lv.mons.filter(m=>m.hp>0):ANIM.filter(a=>a.st!=='flee');L.forEach(o=>{const d=Math.hypot(o.x-S.px,o.y-S.py);if(d<bd){bd=d;b=o}});return b}
 function shoot(o){const i=gi('bow');if(i<0||!(S.items.fleche>0))return;BOWT=.35;LASTSW=Date.now();S.items.fleche--;const dmg=BOWS[i][1];wear('bow',1);sfx('shoo');
- SHOTS.push({x0:S.px,y0:S.py,o,t:0});setTimeout(()=>{if(MINE&&MINE.lv.mons.includes(o))hitMon(o,dmg);else if(!MINE&&ANIM.includes(o)&&o.st!=='flee')hitAnimal(o,dmg)},160)}
+ SHOTS.push({x0:S.px,y0:S.py,o,t:0});setTimeout(()=>{if(MINE&&MINE.lv.mons.includes(o)&&o.hp>0)hitMon(o,dmg);else if(!MINE&&ANIM.includes(o))hitAnimal(o,dmg)},160)}
 function strike(a){SWING=.4;LASTSW=Date.now();hitAnimal(a,meleeDmg());if(held()==='sword'&&gi('sword')>=0)wear('sword',1)}
 /* ---- monstres des grottes ---- */
 const MONS={rat:{n:'Rat des cavernes',hp:5,dmg:3,sp:125,d:1},araignee:{n:'Araignée géante',hp:8,dmg:5,sp:105,d:1},slime:{n:'Slime toxique',hp:16,dmg:9,sp:85,d:2},spectre:{n:'Spectre',hp:24,dmg:13,sp:118,d:3},golem:{n:'Golem de pierre',hp:45,dmg:18,sp:55,d:3},salamandre:{n:'Salamandre de lave',hp:60,dmg:24,sp:95,d:4}};
@@ -1613,7 +1613,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-13';
+const GAME_VERSION='web-14';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
