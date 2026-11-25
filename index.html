@@ -815,7 +815,7 @@ function renderShop(){const t=tierOf(),ft=freeTiles();let h='';
   h+='<h3>Fabriquer (outils et armes qui s’usent)</h3>';Object.keys(GEAR).forEach(k=>{const G0=GEAR[k],g=S.gear[k],i=gi(k),cur=i>=0?G0.L[i]:null;
    h+=`<div class="card"><b>${G0.n}</b> · ${cur?cur[0]+(G0.st?' ('+G0.st+' '+cur[1]+')':'')+' · '+(g&&g.d>=0?Math.ceil(g.d)+'/'+cur[4]+' '+G0.u:'à vie'):'aucune'}`+(cur&&g&&g.d>=0?`<div class="meter"><i style="width:${Math.max(2,Math.round(g.d/cur[4]*100))}%"></i></div>`:'')+'<div class="row">';
    G0.L.forEach((c,j)=>{if(k==='pick'&&j===0)return;if(k==='lamp'&&gi('lamp')>=0)return;if(c[5]>t+1)return;const lk=c[5]>t;h+=`<button class="btn ghost sm" data-cr="${k}" data-j="${j}" ${lk||!canPay(c)?'disabled':''}>${lk?c[0]+' : échelon « '+TIERS[c[5]][0]+' »':(k==='lamp'?'Acheter':'Fabriquer')+' : '+c[0]+' ('+(G0.st?G0.st+' '+c[1]+', ':'')+(c[4]<0?'à vie':c[4]+' '+G0.u)+') · '+costTxt(c)}</button>`});h+='</div></div>'});
-  h+=`<div class="card"><b>Flèches</b> · tu en as ${S.items.fleche||0}<div class="row"><button class="btn ghost sm" data-ar="1" ${canPay([0,0,{bois:3,pierre:2},10])?'':'disabled'}>Fabriquer 10 flèches · 10 $ + 3 bois + 2 pierre</button></div></div><h3>Améliorations permanentes</h3>`;
+  h+=`<div class="card"><b>Flèches</b> · tu en as ${S.items.fleche||0}<div class="row"><button class="btn ghost sm${canPay([0,0,{bois:3,pierre:2},10])?'':' dim'}" data-ar="1">Fabriquer 10 flèches · 10 $ + 3 bois + 2 pierre</button></div></div><h3>Améliorations permanentes</h3>`;
   [['tools',TOOLS,'Outils des ouvriers','× fruits/s de tes ouvriers',c=>'×'+String(c[1]).replace('.',',')],['sec',SECS,'Ton sécateur','% de fruits en plus',c=>'+'+Math.round(c[1]*100)]].forEach(([k,L,n,u,f])=>{const cur=S[k],nx=L[cur+1];
    h+=`<div class="card"><b>${n}</b> · actuel : ${L[cur][0]} (${f(L[cur])} ${u})<div class="row">`+(nx?`<button class="btn ghost sm" data-fo="${k}" ${canPay(nx)?'':'disabled'}>Forger : ${nx[0]} (${f(nx)} ${u}) · ${costTxt(nx)}</button>`:'<small>Au maximum</small>')+'</div></div>'})}
  $('shopBody').innerHTML=h}
@@ -827,7 +827,7 @@ $('shopBody').onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)r
  else if(b.dataset.se){const p=ALLPARCELS.find(q=>q.id===b.dataset.se),l=(S.seed[p.id]||0)+1,c=seedCost(p,l);if(S.E<c)return;S.E-=c;S.seed[p.id]=l;applyMults();rebuildParcels(MAPS[p.map]);news(p.name+' : '+SEEDS[l][0]+' plantée !')}
  else if(b.dataset.sm!=null){sellMach(+b.dataset.sm,b.dataset.pend==='1')}
  else if(b.dataset.cr){const k=b.dataset.cr,j=+b.dataset.j,c=GEAR[k]&&GEAR[k].L[j];if(!c||c[5]>tierOf()||!canPay(c))return;pay(c);S.gear[k]={i:j,d:c[4]};banner(c[0],'fabriqué par Gaby')}
- else if(b.dataset.ar){const c=[0,0,{bois:3,pierre:2},10];if(!canPay(c)||invRoom('fleche')<10){if(invRoom('fleche')<10)news('Sac plein !');return}pay(c);addInv('fleche',10)}
+ else if(b.dataset.ar){const c=[0,0,{bois:3,pierre:2},10],miss=Object.keys(c[2]).filter(k=>ore(k)<c[2][k]).map(k=>(c[2][k]-Math.floor(ore(k)))+' '+(MATN[k]?MATN[k][1].toLowerCase():k));if(S.E<c[3])miss.unshift(usd(c[3]-S.E));if(miss.length){news('Il te manque : '+miss.join(', '));sfx('sad');return}pay(c);const got=addInv('fleche',10,true);if(got<10){S.items.fleche-=got;Object.keys(c[2]).forEach(k=>S.ore[k]=ore(k)+c[2][k]);S.E+=c[3];news('Pas de place dans ton sac pour les flèches : libère une case ou agrandis le sac');sfx('sad');return}news('+10 flèches ! (tu en as '+S.items.fleche+')')}
  else if(b.dataset.fo){const k=b.dataset.fo,L={pick:PICKS,tools:TOOLS,sec:SECS,lant:LANTS}[k],nx=L[S[k]+1];if(!nx||!canPay(nx))return;pay(nx);S[k]++;banner(nx[0],'forgé par Gaby')}
  sfx('buy');renderShop();save(true)};
 $('close').onclick=()=>{$('shop').style.display='none';if(S.pending.length)news('Va sur ton terrain pour installer tes machines')};
@@ -1613,7 +1613,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-12';
+const GAME_VERSION='web-13';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
