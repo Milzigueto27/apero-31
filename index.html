@@ -1084,7 +1084,7 @@ function makePerson(o){const g=new THREE.Group(),b=new THREE.Group();g.add(b);co
  const crate=new THREE.Group();crate.add(box(tmat(0x8a5a2b),.36,.26,.28,0,.8,-.32));for(let i=0;i<3;i++)crate.add(mesh(G.cyl,tmat([0xe2384a,0x8a46b8,0xf6d77c][i]),.035,.2,.035,-.1+i*.1,1,-.32));crate.visible=false;b.add(crate);g.userData.crate=crate;
  const umb=new THREE.Group();umb.add(mesh(G.cyl,tmat(0x333333),.015,1.25,.015,0,.62,0));umb.add(mesh(G.cone,tmat(pick([0xff5c93,0x2f557a,0xf6c432,0x3fbfa0]),{side:THREE.DoubleSide}),.72,.26,.72,-.12,1.3,0));umb.position.set(.27,tY-.15,.06);umb.visible=false;b.add(umb);g.userData.umb=umb;g.userData.umbOk=o.umb;
  mergeStatic(b);g.userData.body=b;g.userData.blink=Math.random()*4;g.scale.setScalar(.9*kid);return g}
-function animPerson(g,moving,step,dt){const s=moving?Math.sin(step):0,u=g.userData;u.legs[0].rotation.x=s*.6;u.legs[1].rotation.x=-s*.6;u.arms[0].rotation.x=-s*.5;u.arms[1].rotation.x=u.umb.visible?-.9:s*.5;u.body.position.y=moving?Math.abs(s)*.05:Math.sin(performance.now()/700)*.006;
+function animPerson(g,moving,step,dt){const u=g.userData,s=moving?Math.sin(step)*(u.swing||1):0;u.legs[0].rotation.x=s*.6;u.legs[1].rotation.x=-s*.6;u.arms[0].rotation.x=-s*.5;u.arms[1].rotation.x=u.umb.visible?-.9:s*.5;u.body.position.y=moving?Math.abs(s)*.05:Math.sin(performance.now()/700)*.006;
  u.blink-=dt||.016;if(u.blink<0){u.eyes.scale.y=.1;if(u.blink<-.12){u.blink=2+Math.random()*4;u.eyes.scale.y=1}}}
 function setMood(g,happy){const m=g.userData.mouth;if(!m||g.userData.dressed)return;m[0].visible=happy;m[1].visible=!happy}
 
@@ -1096,7 +1096,8 @@ const OUTFITS=[
  {id:'rodeur',n:'Rôdeur',how:'Descends au niveau 10 d’une grotte',ok:()=>(S.maxDepth||0)>=10,prog:()=>'niveau '+(S.maxDepth||0)+'/10'},
  {id:'chevalier',n:'Chevalier',how:'Ouvre la Vieille ville',ok:()=>!!S.cities.A},
  {id:'samourai',n:'Samouraï',how:'Ouvre Sakura',ok:()=>!!S.cities.J},
- {id:'astronaute',n:'Astronaute',how:'Ouvre Station Nova',ok:()=>!!S.cities.N}];
+ {id:'astronaute',n:'Astronaute',how:'Ouvre Station Nova',ok:()=>!!S.cities.N},
+ {id:'nocturne',n:'Rôdeur nocturne (test HD)',how:'Tenue de test',ok:()=>true,glb:'rodeur-nocturne.glb',swing:.6,piv:{JambeG:[-.15,.5,0],JambeD:[.15,.5,0],BrasG:[-.3,.8,0],BrasD:[.3,.8,0]}}];
 const OUTID=new Set(OUTFITS.map(o=>o.id));
 const OG={};let PLAIDM=null;
 function plaidMat(){if(PLAIDM)return PLAIDM;const W=64,d=new Uint8Array(W*W*3),C=h=>[h>>16&255,h>>8&255,h&255];const b=C(0xc0392b),dk=C(0x6a1a18),l=C(0xe86a4a),li=C(0xf0e0c0);
@@ -1178,11 +1179,22 @@ function buildOutfit(id){
   P[i?'BrasD':'BrasG']=g});
  return P}
 /* habille un perso fait par makePerson : on cache ses pièces d'origine et on accroche celles de la tenue */
-function dressPerson(g,id){if(!OUTID.has(id))id='fermier';const u=g.userData;undress(g);const parts=buildOutfit(id),add=[],hid=[],hide=o=>{if(o.visible){o.visible=false;hid.push(o)}};
+let GLP=null;const GLBC={};
+function loadScript(u){return new Promise((r,j)=>{const s=document.createElement('script');s.src=u;s.onload=r;s.onerror=j;document.head.appendChild(s)})}
+function gltfReady(){if(!GLP)GLP=loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js').then(()=>loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js')).then(()=>{const l=new THREE.GLTFLoader();l.setMeshoptDecoder(window.MeshoptDecoder);return l}).catch(e=>{GLP=null;throw e});return GLP}
+function loadGlbOutfit(o){if(!GLBC[o.id])GLBC[o.id]=gltfReady().then(l=>new Promise((res,rej)=>l.load(o.glb+'?v='+GAME_VERSION,g=>{const parts={};g.scene.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;const m=n.material;if(m.map){m.map.encoding=THREE.LinearEncoding}n.material=new THREE.MeshToonMaterial({map:m.map||null,color:m.map?0xffffff:(m.color?m.color.getHex():0xffffff),gradientMap:TG})}const k=(n.name||'').split('_')[1];if(k&&!parts[k]&&/^(Corps|JambeG|JambeD|BrasG|BrasD)$/.test(k))parts[k]=n});res(parts)},undefined,rej))).catch(e=>{delete GLBC[o.id];throw e});return GLBC[o.id]}
+function dressGlb(g,o){const u=g.userData;loadGlbOutfit(o).then(parts=>{if(u.wantOut!==o.id)return;undress(g);const add=[],hid=[],moved=[],hide=x=>{if(x.visible){x.visible=false;hid.push(x)}};
+  u.body.children.forEach(c=>{if(c.isMesh)hide(c)});u.legs.concat(u.arms).forEach(p=>p.children.forEach(c=>{if(c.isMesh)hide(c)}));u.eyes.children.forEach(hide);
+  [['Corps',u.body],['JambeG',u.legs[0]],['JambeD',u.legs[1]],['BrasG',u.arms[0]],['BrasD',u.arms[1]]].forEach(([k,p])=>{const src=parts[k];if(!src)return;const c=src.clone(true);
+   if(k!=='Corps'){const pv=o.piv[k],old=p.position.clone();moved.push([p,old]);p.position.set(pv[0],pv[1],pv[2]);c.position.sub(p.position);
+    if(k[0]==='B')p.children.forEach(t=>{if(!t.isMesh&&t!==c){moved.push([t,t.position.clone()]);t.position.y+=.14}})}
+   p.add(c);add.push(c)});
+  u.dress={id:o.id,add,hid,moved};u.dressed=true;u.swing=o.swing||1}).catch(()=>{if(u.wantOut===o.id&&!u.dress)dressPerson(g,'rodeur')})}
+function dressPerson(g,id){if(!OUTID.has(id))id='fermier';const u=g.userData;u.wantOut=id;const od=OUTFITS.find(x=>x.id===id);if(od.glb){dressGlb(g,od);return}undress(g);u.swing=1;const parts=buildOutfit(id),add=[],hid=[],hide=o=>{if(o.visible){o.visible=false;hid.push(o)}};
  u.body.children.forEach(c=>{if(c.isMesh)hide(c)});u.legs.concat(u.arms).forEach(p=>p.children.forEach(c=>{if(c.isMesh)hide(c)}));u.eyes.children.forEach(hide);
  [['Corps',u.body],['JambeG',u.legs[0]],['JambeD',u.legs[1]],['BrasG',u.arms[0]],['BrasD',u.arms[1]],['Yeux',u.eyes]].forEach(([k,p])=>{p.add(parts[k]);add.push(parts[k])});
  u.dress={id,add,hid};u.dressed=true}
-function undress(g){const u=g.userData,d=u.dress;if(!d)return;d.add.forEach(o=>o.parent&&o.parent.remove(o));d.hid.forEach(o=>o.visible=true);u.dress=null;u.dressed=false}
+function undress(g){const u=g.userData,d=u.dress;if(!d)return;d.add.forEach(o=>o.parent&&o.parent.remove(o));d.hid.forEach(o=>o.visible=true);(d.moved||[]).forEach(([o,p])=>o.position.copy(p));u.swing=1;u.dress=null;u.dressed=false}
 function myOutfit(){return OUTID.has(S.outfit)?S.outfit:'fermier'}
 function checkOutfits(){if(!S.outfits)S.outfits={fermier:1};OUTFITS.forEach(o=>{if(!S.outfits[o.id]&&o.ok()){S.outfits[o.id]=1;if(running)banner('Nouvelle tenue : '+o.n,'Va l’essayer dans l’armoire, devant ta maison !')}})}
 function openWardrobe(){checkOutfits();$('travelT').textContent='L’armoire';$('travelInfo').textContent='Choisis ta tenue. Les autres joueurs la voient aussi.';
@@ -1737,7 +1749,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-22';
+const GAME_VERSION='web-23';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
