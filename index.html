@@ -720,13 +720,13 @@ function genLevel(cave,depth){const W=36,H=26,r=rng(hashStr(cave.id+':'+depth+':
   let x=r()*tot,ty=ores[0][0];for(const[o,w]of ores){if(x<w){ty=o;break}x-=w}const hp=NODEHP[ty]*(1+depth*.15);nodes.push({c:f,x:(f%W+.5)*T,y:(Math.floor(f/W)+.5)*T,ty,hp,max:hp,amt:1+Math.floor(depth/2)+(ty==='pierre'?2:0)})}
  const bats=[];for(let k=0;k<Math.min(7,depth+(depth>2?1:0));k++){const f=floors[Math.floor(r()*floors.length)];if(dist[f]>6)bats.push({x:(f%W+.5)*T,y:(Math.floor(f/W)+.5)*T,vx:0,vy:0,cd:0,a:r()*6})}
  const torches=[];for(let k=0;k<60&&torches.length<10;k++){const f=floors[Math.floor(r()*floors.length)];const x=f%W,y=Math.floor(f/W);if(at(x,y-1)&&!torches.some(t=>Math.abs(t.x-x)+Math.abs(t.y-y)<5))torches.push({x,y})}
- const mons=genMons(r,floors,dist,W,cave,depth);
- return{W,H,g,entry,down,nodes,bats,mons,torches,cave,depth}}
+ const mons=genMons(r,floors,dist,W,cave,depth);const bodies=[];for(let k=0;k<40&&bodies.length<Math.min(3,1+Math.floor(depth/2));k++){const f=floors[Math.floor(r()*floors.length)];if(dist[f]<5||used.has(f))continue;used.add(f);bodies.push({x:(f%W+.5)*T,y:(Math.floor(f/W)+.5)*T,a:r()*6.28,s:Math.floor(r()*6)})}
+ return{W,H,g,entry,down,nodes,bats,mons,bodies,torches,cave,depth}}
 function mineSolid(x,y){const L=MINE.lv,cx=Math.floor(x/T),cy=Math.floor(y/T);if(cx<0||cy<0||cx>=L.W||cy>=L.H)return true;if(L.g[cy*L.W+cx])return true;const ox=x/T-cx-.5,oy=y/T-cy-.5;
  for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){if(L.g[(cy+b)*L.W+cx+a]&&((a&&Math.sign(ox)===a&&Math.abs(ox)>.28)||(b&&Math.sign(oy)===b&&Math.abs(oy)>.28)))return true}return false}
-function enterMine(c,depth){if(!MINE){if(lampLeft()<=0){news('Il te faut une torche : achète-la au Bricolo, onglet Forge (20 $, elle dure pour toujours)');sfx('sad');return}S.surf={x:S.px,y:S.py,map:MP.id}}MINE={cave:c,depth,lv:genLevel(c,depth)};const e=MINE.lv.entry;S.px=(e%MINE.lv.W+.5)*T;S.py=(Math.floor(e/MINE.lv.W)+.5)*T;
+function enterMine(c,depth){if(!MINE){if(lampLeft()<=0){news('Il te faut une torche : achète-la au Bricolo, onglet Forge (20 $, elle dure pour toujours)');sfx('sad');return}S.surf={x:S.px,y:S.py,map:MP.id};CAVEC={id:c.id,lv:{}}}if(!CAVEC||CAVEC.id!==c.id)CAVEC={id:c.id,lv:{}};MINE={cave:c,depth,lv:CAVEC.lv[depth]||(CAVEC.lv[depth]=genLevel(c,depth))};const e=MINE.lv.entry;S.px=(e%MINE.lv.W+.5)*T;S.py=(Math.floor(e/MINE.lv.W)+.5)*T;
  target=null;autoAct=null;camInit=false;clearActors();buildMineScene();if(depth>=5)unlockAch('deep5');news(c.name+' · niveau '+depth+(depth===c.depth?' (le plus profond)':''));sfx('mine')}
-function exitMine(forced){if(!MINE)return;const s=S.surf;MINE=null;exitMineScene();S.px=s.x;S.py=s.y;S.surf=null;camInit=false;target=null;autoAct=null;news(forced?'Tu remontes à tâtons vers la sortie…':'De retour à la surface !')}
+function exitMine(forced){if(!MINE)return;const s=S.surf;MINE=null;CAVEC=null;exitMineScene();S.px=s.x;S.py=s.y;S.surf=null;camInit=false;target=null;autoAct=null;news(forced?'Tu remontes à tâtons vers la sortie…':'De retour à la surface !')}
 function mineCands(){const L=[],lv=MINE.lv,W=lv.W;
  lv.mons.forEach(mo=>{if(mo.hp<=0)return;const k=Math.ceil(mo.hp/meleeDmg());L.push({x:mo.x,y:mo.y,o:mo,label:'Combattre : '+mo.n+' ('+k+' coup'+(k>1?'s':'')+')',ok:true,act:()=>{SWING=.4;LASTSW=Date.now();hitMon(mo,meleeDmg());if(held()==='sword'&&gi('sword')>=0)wear('sword',1)}})});
  lv.nodes.forEach(n=>{if(n.hp<=0)return;const nm=MATN[n.ty][1],full=invRoom(n.ty)<1;L.push({x:n.x,y:n.y,o:n,label:full?'Sac plein ! ('+nm+')':'Miner : '+nm+' ('+Math.ceil(n.hp/pickF())+' coup'+(n.hp>pickF()?'s':'')+(held()==='pick'?' · '+gearName('pick'):' · à mains nues : prends ta pioche, case 3')+')',ok:!full,act:()=>{SWING=.4;LASTSW=Date.now();n.hp-=pickF();if(held()==='pick')wear('pick',1);sfx('mine');pop(n.x,n.y,'Tac !','#e8f0f8',6,MATN[n.ty][2]);if(n.mesh)n.mesh.rotation.y+=.4;
@@ -1307,6 +1307,8 @@ function buildMineScene(){exitMineScene();const lv=MINE.lv,W=lv.W,H=lv.H,g=new T
  lv.torches.forEach(t=>{g.add(mesh(G.cyl,mat(0x5a3a1e),.04,.4,.04,t.x+.5,1,t.y-.35));g.add(mesh(G.sph,lanternMat,.09,.13,.09,t.x+.5,1.25,t.y-.35,false))});
  lv.bats.forEach(b=>{const bg=new THREE.Group();bg.add(mesh(G.sph,tmat(0x2a1a2a),.12,.1,.14,0,0,0));[-1,1].forEach(s=>{const w=box(tmat(0x3a2a3a),.3,.02,.18,s*.18,0,0);bg.add(w);(bg.userData.w=bg.userData.w||[]).push(w)});[-1,1].forEach(s=>{const e=mesh(G.sph,eyeGlow,.02,.02,.02,s*.04,.03,.12,false);bg.add(e)});g.add(bg);b.mesh=bg});
  lv.mons.forEach(m=>{m.mesh=makeMon(m.ty);m.mesh.position.set(m.x/T,0,m.y/T);g.add(m.mesh)});
+ lv.nodes.forEach(n=>{if(n.hp<=0&&n.mesh)n.mesh.visible=false});WORK.forEach(w=>w.visible=false);if(typeof ghost!=='undefined'&&ghost)ghost.visible=false;
+ (lv.bodies||[]).forEach(b=>{const p=makePerson({shirt:[0x6a5a4a,0x2f557a,0x5a3a2a][b.s%3],pants:0x3a3a3a,skin:SKIN[b.s%SKIN.length],hair:HAIR[b.s%HAIR.length],style:'short',hat:'helmet'});const L=p.userData.legs,A=p.userData.arms;L[1].rotation.x=-1.25;L[0].rotation.x=.25;A[0].rotation.x=-1.4;A[1].rotation.x=.4;const w=new THREE.Group();p.rotation.z=Math.PI/2;p.position.set(.28,.02,0);w.add(p);w.position.set(b.x/T,0,b.y/T);w.rotation.y=b.a;g.add(w);const pk=mesh(G.cyl,tmat(0x7a5232),.03,.7,.03,b.x/T+Math.cos(b.a)*.6,.05,b.y/T+Math.sin(b.a)*.6);pk.rotation.z=Math.PI/2;pk.rotation.y=b.a;g.add(pk)});
  scene.add(g)}
 function exitMineScene(){if(mineG){scene.remove(mineG);mineG.traverse(o=>{if(o.isMesh&&o.geometry&&!Object.values(G).includes(o.geometry)&&!Object.values(FIELDGEO).includes(o.geometry))o.geometry.dispose()});mineG=null}if(MP&&MP.group)MP.group.visible=!MINE}
 function fireworks(x,y,n){const cols=[0xf6d77c,0xff5c93,0x7fe3ff,0xffffff,0xb9ff7a];for(let k=0;k<(n||6);k++)setTimeout(()=>{const bx=U(x)+(Math.random()-.5)*8,by=7+Math.random()*4,bz=U(y)+(Math.random()-.5)*4,c=new THREE.Color(cols[k%5]);for(let i=0;i<120;i++){const a=Math.random()*6.28,b=Math.acos(2*Math.random()-1),s=3+Math.random()*3;FWD.push({x:bx,y:by,z:bz,vx:Math.sin(b)*Math.cos(a)*s,vy:Math.cos(b)*s,vz:Math.sin(b)*Math.sin(a)*s,l:1.6,c})}if(FWD.length>900)FWD.splice(0,FWD.length-900)},k*450)}
@@ -1360,7 +1362,7 @@ function render3D(t,dt){frameN++;
  NPC.forEach(n=>{n.g.position.set(U(n.x),0,U(n.y));if(n.ang!=null)n.g.rotation.y=n.ang;n.g.userData.umb.visible=wk==='rain'&&n.g.userData.umbOk&&!space;animPerson(n.g,n.st!=='shop',n.step,dt);n.g.userData.bag.visible=n.bag>0;if(n.st==='out')setMood(n.g,!n.sad)});
  ANIM.forEach(a=>{const fl=a.k==='ombre'?.3+Math.sin(t/300)*.15:a.k==='lapin'&&a.st!=='eat'?Math.abs(Math.sin(a.step*.8))*.15:0;a.g.position.set(U(a.x),fl,U(a.y));if(a.ang!=null)a.g.rotation.y=a.ang;const L=a.g.userData.legs,mv=a.st!=='eat';L.forEach((l,i)=>l.rotation.x=mv?Math.sin(a.step+i*Math.PI/2)*.6:0);a.g.userData.body.rotation.x=a.st==='eat'?.25:0;const hs=a.g.userData.hitT>0?1.15:1;a.g.scale.setScalar(hs)});
  CHARM.forEach(({c,g,map})=>{if(map!==MP.id)return;const dx=px-c.x,dz=pz-c.y;if(dx*dx+dz*dz<36)g.rotation.y+=angDiff(Math.atan2(dx,dz),g.rotation.y)*.1;animPerson(g,false,0,dt)});
- if(MP.id==='home'){const[pw,ph]=plotSize(),nw=Math.min(8,Math.ceil(S.workers/1.5));WORK.forEach((w,i)=>{w.visible=i<nw;if(!w.visible)return;workerStep(w,i,dt,pw,ph)});
+ if(MP.id==='home'&&!MINE){const[pw,ph]=plotSize(),nw=Math.min(8,Math.ceil(S.workers/1.5));WORK.forEach((w,i)=>{w.visible=i<nw;if(!w.visible)return;workerStep(w,i,dt,pw,ph)});
   S.mach.forEach(m=>{if(!m.g)return;m.g.position.y=.08+(m.on?Math.abs(Math.sin(t/120+m.tx))*.03:0);m.g.userData.smoke.visible=!!m.br;if(m.br)m.g.userData.smoke.children.forEach((s,i)=>{s.position.y=1.2+((t/600+i*.33)%1)*.8})});
   if(S.pending.length){if(ghostType!==S.pending[0]){if(ghost)scene.remove(ghost);ghost=makeMachine(S.pending[0]);ghost.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.transparent=true;o.material.opacity=.55;o.castShadow=false}});scene.add(ghost);ghostType=S.pending[0]}
    let tx,ty;if(mouseW){tx=Math.floor((mouseW.x-PX)/T);ty=Math.floor((mouseW.y-PY)/T)}if(!mouseW||!tileFree(tx,ty)){tx=Math.floor((S.px-PX)/T);ty=Math.floor((S.py-PY)/T)}ghost.visible=tileFree(tx,ty);ghost.position.set(U(PX)+tx+.5,.12+Math.sin(t/200)*.05,U(PY)+ty+.5)}
@@ -1462,7 +1464,7 @@ function updateHP(dt){if(S.hp<S.hpMax&&performance.now()-hurtT>6000)S.hp=Math.mi
  if(!MINE)ANIM.forEach(a=>{if(a.st!=='atk')return;const at=ANIMT[a.k];if(!at||!at.atk)return;a.bite=(a.bite||0)-dt;if(Math.hypot(a.x-S.px,a.y-S.py)<38&&a.bite<=0){a.bite=1.1;hurt(animDmg(a),a.name)}})}
 const animDmg=a=>ANIMT[a.k].atk*(a.var==='day'?1:1.5)*(1+tierOf()*.2);
 /* ---- tir à l'arc ---- */
-let SHOTS=[],SWING=0,HANDS=null,LASTSW=0,BOWT=0;
+let SHOTS=[],SWING=0,HANDS=null,LASTSW=0,BOWT=0,CAVEC=null;
 const HOTK=['sword','bow','pick'];let HOT=0;try{HOT=Math.max(0,Math.min(2,+(localStorage.getItem('om_hot')||0)))}catch(e){}
 const held=()=>FISH?'rod':HOTK[HOT];
 function setHot(i){HOT=i;try{localStorage.setItem('om_hot',i)}catch(e){}renderHot();sfx('pick');const k=HOTK[i];news(k==='sword'?(gi('sword')>=0?gearName('sword')+' en main':'Pas d’épée : tu te bats à mains nues (forge du Bricolo)'):k==='bow'?(gi('bow')>=0?gearName('bow')+' en main · '+(S.items.fleche||0)+' flèches':'Pas d’arc : fabrique-le à la forge'):gearName('pick')+' en main')}
@@ -1611,7 +1613,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-11';
+const GAME_VERSION='web-12';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
