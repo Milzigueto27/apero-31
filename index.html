@@ -1564,7 +1564,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-4';
+const GAME_VERSION='web-5';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
@@ -1661,7 +1661,9 @@ function processHits(){if(!FARM||MINE||!iOwnMap())return;coPeers.forEach(p=>{if(
 
 /* ---- ferme partagée : connexion et synchronisation ---- */
 const farmRef=p=>FBDB().ref('farms/'+FARM.code+(p?'/'+p:''));
-async function startFarm(code,create){coErr='';code=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12);
+const FCH=window.BroadcastChannel?new BroadcastChannel('om-farm'):null;if(FCH)FCH.onmessage=e=>{if(e.data==='who:'+FBUID&&FARM)FCH.postMessage('busy:'+FBUID)};
+function otherTab(){return new Promise(r=>{if(!FCH)return r(false);let b=false;const h=e=>{if(e.data==='busy:'+FBUID)b=true};FCH.addEventListener('message',h);FCH.postMessage('who:'+FBUID);setTimeout(()=>{FCH.removeEventListener('message',h);r(b)},350)})}
+async function startFarm(code,create){coErr='';if(await otherTab()){coErr='La ferme est déjà ouverte dans un autre onglet de ce navigateur. Ferme l’autre onglet d’abord.';renderCoop();return}code=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12);
  if(!FBDB()||!FBUID||!ROOM){coErr='Connexion au serveur impossible. Vérifie ta connexion internet et recharge la page.';renderCoop();return}
  if(!code){coErr='Entre un code.';renderCoop();return}
  if(!coName)coName='Joueur '+Math.floor(Math.random()*90+10);lsSet('om8_coop',JSON.stringify({n:coName,c:coCol}));
@@ -1672,7 +1674,7 @@ async function startFarm(code,create){coErr='';code=String(code||'').toLowerCase
  catch(e){console.warn(e);coErr='Le serveur a refusé la connexion. Réessaie dans un moment.';renderCoop();return}
  if(!create){if(running&&slot>=0)save(true);slot=-1;let o;try{o=JSON.parse(st.j)}catch(e){coErr='Ferme abîmée.';renderCoop();return}load(o)}
  slot=-1;
- FARM={code,uid:FBUID,host:false,hostId:create?FBUID:null,hostInfo:create?{u:FBUID,t:Date.now()}:null,seq:st.s||1,SV:JSON.parse(st.j),base:sharedView(false),unacked:[],mySeq:Date.now(),ack:{},applied:{},lastSent:null,
+ FARM={code,uid:FBUID,host:false,hostId:create?FBUID:null,hostInfo:create?{u:FBUID,t:Date.now()}:null,seq:st.s||1,ep:st.e||null,SV:JSON.parse(st.j),base:sharedView(false),unacked:[],mySeq:Date.now(),ack:{},applied:{},lastSent:null,
   opT:0,liveT:0,stT:10,off:0,claiming:false,resync:false,R,iv:null};
  R.child('host').on('value',s=>{if(FARM&&FARM.R===R){FARM.hostInfo=s.val();farmTick()}});
  R.child('live').on('value',onLive);
@@ -1693,28 +1695,29 @@ async function claimHost(){if(!FARM||FARM.claiming)return;FARM.claiming=true;con
   if(FARM===F&&r.committed&&r.snapshot.val()&&r.snapshot.val().u===F.uid){F.hostInfo=r.snapshot.val();F.hostId=F.uid;becomeHost(false)}}catch(e){console.warn(e)}finally{F.claiming=false}}
 function becomeHost(fresh){if(!FARM||FARM.host)return;const F=FARM;F.host=true;F.hostId=F.uid;F.unacked=[];
  farmRef('host').onDisconnect().remove();
- F.lastSent=sharedView(true);F.seq++;
- farmRef('live').set({s:F.seq,j:JSON.stringify({f:F.lastSent,a:F.ack})}).catch(()=>{});farmPushState();
+ F.lastSent=sharedView(true);F.seq++;F.ep=F.uid.slice(0,8)+'.'+Math.random().toString(36).slice(2,7);F.applied={};
+ farmRef('live').set({s:F.seq,e:F.ep,j:JSON.stringify({f:F.lastSent,a:F.ack})}).catch(()=>{});farmPushState();
  farmRef('in').on('child_added',onIn);farmRef('need').on('child_added',s=>{s.ref.remove();farmPushState()});
  if(!fresh)news('Tu fais tourner la ferme partagée')}
-function demote(){if(!FARM||!FARM.host)return;FARM.host=false;try{farmRef('in').off();farmRef('need').off();farmRef('host').onDisconnect().cancel()}catch(e){}FARM.unacked=[];FARM.base=sharedView(false)}
-function farmPushState(){if(!FARM||!FARM.host)return;const cur=FARM.lastSent||sharedView(true);farmRef('state').set({s:FARM.seq,j:JSON.stringify(cur),a:JSON.stringify(FARM.ack),t:TS()}).catch(()=>{})}
+function demote(){if(!FARM||!FARM.host)return;FARM.host=false;FARM.ep=null;FARM.seq=0;try{farmRef('in').off();farmRef('need').off();farmRef('host').onDisconnect().cancel()}catch(e){}FARM.unacked=[];FARM.base=sharedView(false)}
+function farmPushState(){if(!FARM||!FARM.host)return;const cur=FARM.lastSent||sharedView(true);farmRef('state').set({s:FARM.seq,e:FARM.ep||'',j:JSON.stringify(cur),a:JSON.stringify(FARM.ack),t:TS()}).catch(()=>{})}
 function onIn(snap){const v=snap.val();snap.ref.remove().catch(()=>{});if(!FARM||!FARM.host||!v)return;let m;try{m=JSON.parse(v.j)}catch(e){return}
- if(!m||m.u===FARM.uid||!Array.isArray(m.o)||(FARM.applied[m.u]||0)>=m.s)return;FARM.applied[m.u]=m.s;FARM.ack[m.u]=m.s;
- const X=sharedView(true);m.o.slice(0,400).forEach(op=>applyOp(X,op));writeShared(X,false)}
+ if(!m||m.u===FARM.uid||!Array.isArray(m.o)||(FARM.applied[m.u]||0)>=m.s)return;FARM.applied[m.u]=m.s;FARM.ack[m.u]=m.s;if(m.e&&m.e!==FARM.ep)return;
+ const X=sharedView(true);m.o.slice(0,400).forEach(op=>{if(!op||!Array.isArray(op.p))return;const p0=op.p[0],p1=op.p[1];const mono=p0==='del'||p0==='stats'||p0==='ach'||(p0==='today'&&p1!=='startE');if(mono&&(op.x||(typeof op.d==='number'&&op.d<0)||('v' in op&&typeof op.v==='number'&&op.p.length>1&&op.v<0)))return;applyOp(X,op)});writeShared(X,false)}
 function farmFlush(){if(!FARM||FARM.host)return;const cur=sharedView(false),ops=diffOps(FARM.base,cur,false);if(!ops.length)return;const s=++FARM.mySeq;
- FARM.unacked.push({s,o:ops,t:Date.now()});farmRef('in').push({j:JSON.stringify({u:FARM.uid,s,o:ops})}).catch(()=>{});FARM.base=cur}
-function onLive(snap){const v=snap.val();if(!FARM||FARM.host||!v||v.s<=FARM.seq)return;let m;try{m=JSON.parse(v.j)}catch(e){return}
- if(m.f){FARM.SV=m.f;FARM.seq=v.s;rebase(m.a);return}
+ FARM.unacked.push({s,o:ops,t:Date.now()});farmRef('in').push({j:JSON.stringify({u:FARM.uid,s,e:FARM.ep,o:ops})}).catch(()=>{});FARM.base=cur}
+function onLive(snap){const v=snap.val();if(!FARM||FARM.host||!v)return;if((v.e||null)===(FARM.ep||null)&&v.s<=FARM.seq)return;let m;try{m=JSON.parse(v.j)}catch(e){return}
+ if(m.f){FARM.ep=v.e||null;FARM.SV=m.f;FARM.seq=v.s;rebase(m.a);return}
+ if((v.e||null)!==(FARM.ep||null)){FARM.ep=v.e||null;FARM.seq=0;askResync();return}
  if(v.s!==FARM.seq+1){askResync();return}
  (m.o||[]).forEach(op=>applyOp(FARM.SV,op));FARM.seq=v.s;rebase(m.a)}
 function rebase(a){farmFlush();const my=(a&&a[FARM.uid])||0,now=Date.now();FARM.unacked=FARM.unacked.filter(u=>u.s>my&&now-u.t<6000);
  const X=JSON.parse(JSON.stringify(FARM.SV));FARM.unacked.forEach(u=>u.o.forEach(op=>applyOp(X,op)));writeShared(X,true);FARM.base=sharedView(false)}
 function askResync(){if(FARM.resync)return;FARM.resync=true;const F=FARM;farmRef('need/'+F.uid).set(Date.now()).catch(()=>{});
- setTimeout(async()=>{try{const s=(await F.R.child('state').once('value')).val();if(FARM===F&&!F.host&&s&&s.j&&s.s>=F.seq){F.SV=JSON.parse(s.j);F.seq=s.s;let a=null;try{a=s.a?JSON.parse(s.a):null}catch(e){}rebase(a)}}catch(e){}F.resync=false},1300)}
+ setTimeout(async()=>{try{const s=(await F.R.child('state').once('value')).val();if(FARM===F&&!F.host&&s&&s.j&&(s.s>=F.seq||(s.e||null)!==(F.ep||null))){F.ep=s.e||null;F.SV=JSON.parse(s.j);F.seq=s.s;let a=null;try{a=s.a?JSON.parse(s.a):null}catch(e){}rebase(a)}}catch(e){}F.resync=false},1300)}
 function farmUpdate(){if(!FARM)return;const now=performance.now(),dt=Math.min(1,(now-(FARM.rt||now))/1000);FARM.rt=now;
  if(FARM.host){FARM.liveT-=dt;if(FARM.liveT<=0){FARM.liveT=.3;const cur=sharedView(true),ops=diffOps(FARM.lastSent,cur,true);FARM.seq++;
-   farmRef('live').set({s:FARM.seq,j:JSON.stringify({o:ops,a:FARM.ack})}).catch(()=>{});FARM.lastSent=cur}
+   farmRef('live').set({s:FARM.seq,e:FARM.ep,j:JSON.stringify({o:ops,a:FARM.ack})}).catch(()=>{});FARM.lastSent=cur}
   FARM.stT-=dt;if(FARM.stT<=0){FARM.stT=10;farmPushState()}}
  else{FARM.opT-=dt;if(FARM.opT<=0){FARM.opT=.2;farmFlush()}}}
 async function leaveFarm(){if(!FARM)return;const F=FARM;
