@@ -1694,7 +1694,7 @@ function makeMon(ty){const g=new THREE.Group();
 /* ---- arbres à débloquer dans chaque parcelle ---- */
 const TREEMUL=3;
 const treesOf=p=>{if(!owned(p))return 0;const n=S.trees&&S.trees[p.id];return Math.max(1,Math.min(nSrc(p),n||1))};
-const treeCost=(p,n)=>[cc(Math.round((p.cost||200)*.08*Math.pow(1.3,n))),{bois:Math.ceil(1+n*.7)}];
+const treeCost=(p,n)=>{const m={bois:Math.ceil(3+n*1.5),pierre:Math.ceil(2+n*1.2)};if(n>=2)m.fer=Math.ceil(1+(n-2)*.9);if(n>=4)m.cuivre=Math.ceil(1+(n-4)*.8);if(n>=7)m.argent=Math.ceil(1+(n-7)*.5);if(n>=10)m.or=Math.ceil(1+(n-10)*.4);return[cc(Math.round((p.cost||200)*.12*Math.pow(1.35,n))),m]};
 function plantTree(p){const n=treesOf(p);if(n>=nSrc(p))return;const[c,mt]=treeCost(p,n);if(S.E<c||!hasMat(mt))return;S.E-=c;payMat(mt);S.trees[p.id]=n+1;buildSources();rebuildParcels(MAPS[p.map]);
  const s=genSources(p)[n];pop(s.x,s.y,'Planté ! ('+(n+1)+'/'+nSrc(p)+')','#7ddc6a',18,'#7ddc6a');sfx('buy')}
 /* ---- bus touristique ---- */
@@ -1778,7 +1778,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-26';
+const GAME_VERSION='web-27';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
