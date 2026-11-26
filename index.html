@@ -290,7 +290,7 @@ const UPS=[
  ['ray2','Grande réserve','L’Ortu stocke 800 L.',2000,2,s=>s.shelfCap=Math.max(s.shelfCap,800)],
  ['fusil','Fusil à bouchons','Chaque coup compte double contre les animaux.',2200,2,s=>s.shoo=2],
  ['camion','Camionnette','Remplit tes rayons depuis ta cave, toute seule.',2500,2,s=>s.auto=true],
- ['meca','Mécanicien','Répare tout seul tes machines en panne en 15 s : avec tes matériaux, sinon il achète les pièces.',2800,2,s=>s.meca=true],
+ ['meca','Jo le mécano','Jo court réparer tes machines et le bus en panne : avec tes matériaux, sinon il achète les pièces.',2800,2,s=>s.meca=true],
  ['remorque','Remorque','200 fruits et 800 L transportés.',3500,3,s=>{s.bagCap=Math.max(s.bagCap,200);s.crateCap=Math.max(s.crateCap,800)}],
  ['serre','Serres chauffées','La neige ne ralentit plus tes cultures.',4000,3,s=>s.serre=true],
  ['vinchaud','Stand de vin chaud','Quand il neige, 50 % de clients en plus.',4500,3,s=>s.vinchaud=true],
@@ -613,7 +613,7 @@ function sfx(k){if(!AC||!aPrefs.sfx)return;const t=AC.currentTime;
  else if(k==='fanfare'){[60,64,67,72,67,72,76,79].forEach((m,i)=>voice(i%2?'bell':'pluck',m,t+i*.09,.18,1.5,sfxG))}
  else if(k==='mission'){[67,72,76,79,84].forEach((m,i)=>voice('bell',m,t+i*.09,.2,1.4,sfxG))}}
 /* ================= LOGIQUE ================= */
-function solid(x,y){if(MINE)return mineSolid(x,y);const m=MP;if(m===HOME){if(PLZ.some(p=>(x/T-p.x)**2+(y/T-p.y)**2<1.7))return true;const tx=x/T,ty=y/T;if(tx>38.1&&tx<45.6&&ty>35.6&&ty<37.9)return true;if(FNTS.some(f=>(tx-f[1])**2+(ty-f[2])**2<f[3]*f[3]))return true}if(x<12||y<12||x>m.WT*T-12||y>m.HT*T-12)return true;
+function solid(x,y){if(MINE)return mineSolid(x,y);const m=MP;if(m===HOME){if(PLZ.some(p=>(x/T-p.x)**2+(y/T-p.y)**2<1.7))return true;const tx=x/T,ty=y/T;if(tx>38.1&&tx<45.6&&ty>35.6&&ty<37.9)return true;if(joSolid(tx,ty))return true;if(FNTS.some(f=>(tx-f[1])**2+(ty-f[2])**2<f[3]*f[3]))return true}if(x<12||y<12||x>m.WT*T-12||y>m.HT*T-12)return true;
  if(m.sea&&x>m.sea*T-6&&!(y>20.4*T&&y<21.8*T&&x<110*T)&&!(y>36.4*T&&y<37.8*T&&x<108*T))return true;
  if(m.POND&&((x-m.POND.x)/m.POND.rx)**2+((y-m.POND.y)/m.POND.ry)**2<1)return true;
  if(m.CAVES.some(c=>x>c.x*T&&x<(c.x+c.w)*T&&y>c.y*T&&y<(c.y+c.h)*T+6))return true;
@@ -641,7 +641,7 @@ function cands(){const L=[],m=MP;
  if(m.id==='home'){S.mach.forEach(mc=>{const d=M[mc.t],n=Math.min(S.bag,Math.floor(d.cap-mc.buf)),x=PX+mc.tx*T+T/2,y=PY+mc.ty*T+T/2;
    if(mc.br){const rq=REPAIR[mc.t],paid=mc.rp>0,can=paid||hasMat(rq)||S.items.kit>0;L.push({x,y,o:mc,label:paid?'Réparation de '+d.name+' : '+mc.rp+'/4 (continue !)':can?'En panne ! Réparer '+d.name+' ('+(hasMat(rq)?matTxt(rq):'1 kit')+', 4 coups)':'En panne : il te faut '+matTxt(rq)+' pour réparer '+d.name,ok:can,act:()=>{if(!mc.rp){if(hasMat(rq))payMat(rq);else S.items.kit--}mc.rp=(mc.rp||0)+1;sfx('mine');pop(x,y,'Clang ! '+mc.rp+'/4','#e8f0f8',8,'#b8b8c0');if(mc.rp>=4){mc.br=0;mc.rp=0;pop(x,y,'Réparé !','#7ddc6a',14,'#fff');sfx('buy')}}});return}
    L.push({x,y,o:mc,label:S.bag<1?d.name+' : '+Math.floor(mc.buf)+'/'+d.cap+' fruits':'Remplir '+d.name+' (+'+n+')',ok:n>0,act:()=>{mc.buf+=n;S.bag-=n;pop(x,y,'+'+n,'#f6d77c',8,'#ff5c93');sfx('pick')}})});
-  const h=m.BID.home,ld=Math.floor(Math.min(S.stock,S.crateCap-S.crate));if(m.id==='home'){L.push({x:BOTH.x*T,y:(BOTH.y+1.2)*T,o:'bota',label:S.bota?'Basile le botaniste répare tes plants et tes clôtures':'Engager Basile le botaniste ('+usd(cc(BOTC))+') : il répare tes plants et clôtures abîmés',ok:!S.bota&&S.E>=cc(BOTC),act:()=>{if(S.bota||S.E<cc(BOTC))return;S.E-=cc(BOTC);S.bota=1;banner('Basile est engagé !','Il soignera tes plants et tes clôtures abîmés par les animaux');sfx('fanfare')}});L.push({x:FSTAND.x,y:FSTAND.y+44,o:'fstand',label:'Poissonnerie : vendre tes poissons',ok:true,auto:1,act:openFishStand})}
+  const h=m.BID.home,ld=Math.floor(Math.min(S.stock,S.crateCap-S.crate));if(m.id==='home'){L.push({x:BOTH.x*T,y:(BOTH.y+1.2)*T,o:'bota',label:S.bota?'Basile le botaniste répare tes plants et tes clôtures':'Engager Basile le botaniste ('+usd(cc(BOTC))+') : il répare tes plants et clôtures abîmés',ok:!S.bota&&S.E>=cc(BOTC),act:()=>{if(S.bota||S.E<cc(BOTC))return;S.E-=cc(BOTC);S.bota=1;banner('Basile est engagé !','Il soignera tes plants et tes clôtures abîmés par les animaux');sfx('fanfare')}});L.push({x:(JOH.x+.6)*T,y:(JOH.y+.7)*T,o:'jo',label:S.meca?'Jo le mécano répare tes machines et le bus en panne':'Engager Jo le mécano ('+usd(cc(JOC))+') : il répare tes machines et le bus en panne',ok:!S.meca&&S.E>=cc(JOC),act:()=>{const u=UPS.find(x=>x.id==='meca');if(S.meca||!u||S.E<cc(u.cost))return;S.E-=cc(u.cost);S.ups.meca=1;u.fx(S);banner('Jo le mécano est engagé !','Il file réparer tes machines et le bus dès qu’ils tombent en panne');sfx('fanfare')}});L.push({x:FSTAND.x,y:FSTAND.y+44,o:'fstand',label:'Poissonnerie : vendre tes poissons',ok:true,auto:1,act:openFishStand})}
   L.push({x:h.dx,y:h.dy-8,o:'house',label:'Entrer dans ta maison (la cave à vin est dedans)',ok:true,act:()=>enterHouse()});
   const st=m.BID.store,evc=Math.round(40*BUYMULT[tierOf()]);
   L.push({x:st.x+.9*T,y:st.y+st.h+30,o:'board',label:S.evT>0?'Soirée dégustation en cours !':S.evCD>0?'Prochaine dégustation dans '+Math.ceil(S.evCD)+' s':'Lancer une soirée dégustation ('+usd(evc)+', 3× plus de clients)',ok:S.evT<=0&&S.evCD<=0&&S.E>=evc,
@@ -803,6 +803,52 @@ function botTick(dt){if(!S)return;if(!S.bota){if(BOT){BOT.g.position.set(BOTH.x,
  else if(j){if(j.k==='c'){const v=(S.chp[j.id]!=null?S.chp[j.id]:100)+35*dt;if(v>=100){delete S.chp[j.id];j.done=1;pop(j.x,j.y-20,'Plant soigné !','#7ddc6a',8,'#7ddc6a')}else S.chp[j.id]=v}else{S.fhp=S.fhp||{};const v=fenceHp({id:j.id})+25*dt;if(v>=100){delete S.fhp[j.id];j.done=1;pop(j.x,j.y-20,'Clôture réparée !','#f6d77c',8,'#f6d77c')}else S.fhp[j.id]=v}
   if(BOT.p.userData.arms)BOT.p.userData.arms[1].rotation.x=-1.2+Math.sin(performance.now()/120)*.5}
  BOT.g.position.set(U(BOT.x),0,U(BOT.y));animPerson(BOT.p,mv,BOT.step,dt)}
+/* ---- Jo le mécano (garage + réparations) ---- */
+const JOG={x:36,y:51.8},JOH={x:JOG.x-3.2,y:JOG.y+3.1},JOC=2800,
+JOSAY=['Une clé de 12 et tout repart !','J’ai pas de muscles, mais j’ai du doigté.','Ça grince ? Un coup de graisse et c’est réglé.','Tes machines, je les connais par cœur… enfin, par os.','Le bus ? Encore le carbu, je parie.','Toujours un boulon qui traîne quelque part.','Je bosse jour et nuit, je dors jamais de toute façon.','Un vrai mécano répare, il remplace pas !','Si ça tourne, je touche pas. Si ça tourne pas, j’arrive.','J’ai les mains dans le cambouis jusqu’aux phalanges.','Mes boucles blondes ? 100 % naturelles, merci.','Rien ne résiste à ma ceinture à outils.','Cette vieille voiture, je la finirai un jour…','Un squelette mécano, ça rouille pas !'],
+JOHIRE=['Une machine en panne ? Engage-moi, je répare tout !','Je cherche du boulot, j’ai toutes mes clés.','Jo le mécano, pour vous servir !','Je répare même le bus, tu sais.','Pas cher pour un squelette qui bosse 24 h/24 !','Tes machines tombent en panne ? Moi je cours !'];
+let JO=null;
+function joSolid(tx,ty){return(tx>JOG.x-3.15&&tx<JOG.x+3.15&&ty>JOG.y-2.4&&ty<JOG.y+1.2)||(tx>JOG.x-5&&tx<JOG.x-3.6&&ty>JOG.y+2.75&&ty<JOG.y+3.45)||((tx-JOG.x-3.8)**2+(ty-JOG.y-2.4)**2<.5)||((tx-JOG.x-3.75)**2+(ty-JOG.y-1.2)**2<.25)}
+function makeJoGarage(){const h=new THREE.Group(),cw=tmat(0xe2d6c2),dk=tmat(0x3a3a42),rf=tmat(0x2f5a8a),wd=tmat(0x8a5a32),rd=tmat(0xd9472b),bk=tmat(0x1c1c1c),gr=tmat(0x9a9aa2),ye=tmat(0xf6c445);
+ h.add(box(tmat(0x8f8f8f),6.6,.08,5,0,.04,0));h.add(box(tmat(0x6a6a6a),5.6,.09,.9,0,.045,-2.8));
+ h.add(box(cw,6,2.6,.2,0,1.3,2.2));[-1,1].forEach(s=>h.add(box(cw,.2,2.6,4.4,s*3,1.3,0)));h.add(box(cw,6.2,.6,.2,0,2.3,-2.2));
+ h.add(box(gr,5.6,.36,.12,0,1.82,-2.13));for(let i=0;i<3;i++)h.add(box(dk,5.6,.025,.13,0,1.69+i*.12,-2.14));
+ [-1,1].forEach(s=>{for(let i=0;i<5;i++)h.add(box(i%2?bk:ye,.13,.4,.13,s*2.86,.2+i*.4,-2.24))});
+ h.add(box(rf,6.9,.18,5.3,0,2.68,0));h.add(box(tmat(0x244a72),6.9,.3,.1,0,2.55,-2.62));
+ const sg=label('Garage de Jo',{size:.4,bg:'rgba(40,70,120,.95)'});sg.position.set(0,3.2,-2.3);h.add(sg);
+ // vieille voiture capot ouvert
+ const car=new THREE.Group();car.add(box(rd,2.7,.55,1.3,0,.58,0));car.add(box(rd,1.4,.5,1.2,-.3,1.1,0));[-1,1].forEach(s=>car.add(box(tmat(0x9ad0ef),1.2,.34,.02,-.3,1.12,s*.61)));car.add(box(tmat(0x9ad0ef),.02,.34,1.05,.41,1.12,0));
+ [-.9,.9].forEach(x=>[-.63,.63].forEach(z=>{const w=mesh(G.cyl,bk,.29,.2,.29,x,.3,z);w.rotation.x=Math.PI/2;car.add(w);const c=mesh(G.cyl,gr,.13,.21,.13,x,.3,z);c.rotation.x=Math.PI/2;car.add(c)}));
+ const hd=box(rd,.75,.05,1.25,0,0,0);hd.position.set(1.05,1.2,0);hd.rotation.z=1;car.add(hd);car.add(box(dk,.6,.3,.9,1,.95,0));[-1,1].forEach(s=>car.add(box(tmat(0xfff3b0,{emissive:0xfff3b0,emissiveIntensity:.4}),.03,.14,.22,1.36,.68,s*.42)));
+ car.position.set(-.5,0,.45);h.add(car);
+ // mur à outils + étagère
+ h.add(box(wd,2.2,1.1,.06,1.6,1.45,2.07));[[.8,0],[1.2,1],[1.6,0],[2,1],[2.4,0]].forEach(([x,t])=>h.add(t?box(gr,.08,.5,.03,x,1.45,2.02):box(tmat(0xc0392b),.24,.08,.03,x,1.6,2.02)));
+ h.add(box(dk,.6,1.4,.4,-2.5,.7,1.8));for(let i=0;i<3;i++)h.add(box(i%2?rd:tmat(0x2f6fb0),.5,.2,.32,-2.5,.35+i*.45,1.75));
+ // établi dehors (Jo y bricole)
+ h.add(box(wd,1.5,.1,.7,4.3,.85,-3.1));[-.65,.65].forEach(o=>[-.28,.28].forEach(z=>h.add(box(dk,.08,.8,.08,4.3+o,.4,-3.1+z))));h.add(box(rd,.5,.28,.26,4.65,1.04,-3.15));h.add(box(gr,.18,.16,.2,3.85,.98,-3.05));
+ const eng=new THREE.Group();eng.add(box(tmat(0x4a4a52),.5,.32,.36,0,0,0));eng.add(mesh(G.cyl,gr,.1,.2,.1,0,.24,0));eng.position.set(4.25,1.07,-3.05);h.add(eng);
+ // pneus, bidon, jerrican
+ for(let i=0;i<3;i++){const t=mesh(G.torus,bk,.34,.34,.5,-3.8,.12+i*.2,-2.4);t.rotation.x=Math.PI/2;h.add(t)}
+ h.add(mesh(G.cyl,tmat(0x2f6fb0),.3,.9,.3,-3.75,.45,-1.2));h.add(mesh(G.cyl,tmat(0x24588a),.31,.05,.31,-3.75,.9,-1.2));h.add(box(rd,.3,.42,.16,-3.4,.21,-.6));
+ h.position.set(JOG.x,0,JOG.y);h.rotation.y=Math.PI;HOME.group.add(h);return h}
+function makeJo(){makeJoGarage();const g=new THREE.Group();JO={x:JOH.x*T,y:JOH.y*T,g,ready:0,say:'',sayT:2,job:null,wk:null,idleT:5,tink:0,ct:0,step:0};g.position.set(JOH.x,0,JOH.y);HOME.group.add(g);
+ const lb=label('Jo le mécano',{size:.36,bg:'rgba(40,70,120,.9)'});lb.position.set(0,2.35,0);g.add(lb);
+ gltfReady().then(l=>new Promise((res,rej)=>l.load('jo-le-mecano.glb?v='+GAME_VERSION,res,undefined,rej))).then(gl=>{gl.scene.traverse(n=>{if(n.isMesh){n.castShadow=true;n.frustumCulled=false;const m=n.material;if(m.map)m.map.encoding=THREE.LinearEncoding;n.material=new THREE.MeshToonMaterial({map:m.map||null,color:m.map?0xffffff:0xdddddd,gradientMap:TG,skinning:!!n.isSkinnedMesh,side:THREE.DoubleSide})}});
+  gl.scene.updateMatrixWorld(true);const bb=boneBox(gl.scene),hh=bb.max.y-bb.min.y,sc=1.7/hh;const m=gl.scene;m.scale.setScalar(sc);m.position.y=-bb.min.y*sc;g.add(m);
+  const mixer=new THREE.AnimationMixer(m),acts={};gl.animations.forEach(c=>{c.tracks.forEach(t=>{if(/Hips\.position$/.test(t.name)&&/walk|run/.test(c.name)){const v=t.values,n=v.length/3;if(n>1)[0,2].forEach(k=>{const d=v[(n-1)*3+k]-v[k];for(let i=0;i<n;i++)v[i*3+k]-=d*i/(n-1)})}});acts[c.name]=mixer.clipAction(c)});
+  JO.u={anim:{mixer,acts,cur:null,once:null,onceT:0}};JO.ready=1;playAnim(JO.u,'idle')}).catch(()=>{const p=makePerson({shirt:0x2f5a8a,pants:0x2f5a8a,skin:0xeeeae0,hair:0xf2d16b,style:'short',apron:1});g.add(p);JO.p=p;JO.ready=2})}
+function joJob(){if(!S.meca)return null;const b=S.mach.find(m=>m.br);if(b)return{k:'m',m:b,x:PX+b.tx*T+T/2,y:PY+b.ty*T+T/2+34};if(S.busBr&&!S.busBr.tow)return{k:'b',x:S.busBr.x+30,y:11.55*T+44};return null}
+function joHere(){return!!(JO&&JO.ready&&MP===HOME&&!MINE)}
+function joTick(dt){if(!JO)return;JO.wk=null;if(MP!==HOME||MINE)return;
+ JO.sayT-=dt;if(JO.sayT<=0){JO.sayT=8+Math.random()*6;JO.say=pick(S.meca?JOSAY:JOHIRE)}
+ const J=JO.job;if(!J||J.done||(J.k==='m'&&(!J.m.br||S.mach.indexOf(J.m)<0))||(J.k==='b'&&!S.busBr))JO.job=joJob();
+ const j=JO.job,tx=j?j.x:JOH.x*T,ty=j?j.y:JOH.y*T,dx=tx-JO.x,dy=ty-JO.y,d=Math.hypot(dx,dy);let an='idle',ts=1,mv=false;
+ if(d>10){const run=d>300,sp=run?170:70,st=Math.min(sp*dt,d);JO.x+=dx/d*st;JO.y+=dy/d*st;JO.g.rotation.y=Math.atan2(dx,dy);an=run?'run':'walk';mv=true;JO.step+=dt*(run?14:9)}
+ else if(j){JO.g.rotation.y=Math.PI;an=j.k==='b'?'kneel':'work';JO.ct-=dt;if(JO.ct<=0){JO.ct=1.4;pop(JO.x,JO.y-60,pick(['Clang !','Tac tac','Vrrr…','Bonk !']),'#e8f0f8',6,'#b8b8c0');if(Math.random()<.5)sfx('mine')}
+  if(j.k==='m')JO.wk=j.m;else{j.t=(j.t||0)+dt;if(j.t>8&&S.busBr){S.busBr=null;j.done=1;pop(JO.x,JO.y-40,'Bus réparé par Jo !','#7ddc6a',16,'#fff');news('Jo a réparé le bus, il repart !');sfx('buy')}}}
+ else{JO.g.rotation.y=-Math.PI/2;JO.idleT-=dt;if(JO.idleT<=0){JO.tink=!JO.tink;JO.idleT=JO.tink?7+Math.random()*5:4+Math.random()*4}an=JO.tink?'work':'idle'}
+ JO.g.position.set(U(JO.x),0,U(JO.y));
+ if(JO.ready===1){const A=JO.u.anim;if(A.cur!==an)playAnim(JO.u,an);const a=A.acts[an];if(a)a.timeScale=ts;A.mixer.update(dt)}else if(JO.p)animPerson(JO.p,mv,JO.step,dt)}
 /* ---- la boutique de Rosie ---- */
 function makeRosieShop(){const g=new THREE.Group(),x=60,z=48.8;const w=tmat(0xf4dcb8),rf=tmat(0xc0392b);g.add(box(w,5,2.3,2.4,0,1.15,0));
  const r1=box(rf,5.4,.15,1.6,0,2.65,-.6);r1.rotation.x=.55;g.add(r1);const r2=box(rf,5.4,.15,1.6,0,2.65,.6);r2.rotation.x=-.55;g.add(r2);
@@ -866,7 +912,7 @@ function seasonTick(dt){if(!S)return;const k=season();if(!MINE&&MP.group&&MP.scK
 
 /* ---- fontaines inspirées de l'Italie + phare, manège, kiosque ---- */
 const FNTS=[['trevi',72,17.6,2.2],['tier',82,40,1.6],['barca',6,66,1.9],['nept',22,65,1.8],['tort',44,70,1.7],['lion',30.5,14.6,1.3],['phare',102,4.5,1.1],['carou',79.5,74,2.4],['kiosk',57,74.5,2.1]];
-const EXCLZ=[[41.5,37,5],[79.5,77.5,4.2],[57,78,4.2],[68,78,3.5],[95,56,5.2],[68,73.6,5.2],[20.5,53.5,5.2],...FNTS.map(f=>[f[1],f[2],f[3]+1.6])];
+const EXCLZ=[[41.5,37,5],[JOG.x-.6,JOG.y+.6,5.6],[79.5,77.5,4.2],[57,78,4.2],[68,78,3.5],[95,56,5.2],[68,73.6,5.2],[20.5,53.5,5.2],...FNTS.map(f=>[f[1],f[2],f[3]+1.6])];
 let FANIM=[];
 const WATM=()=>new THREE.MeshStandardMaterial({color:0x5ab8e8,transparent:true,opacity:.78,emissive:0x2a6a9a,emissiveIntensity:.35,roughness:.1});
 function jet(g,x,y,z,h,r){const j=mesh(G.cyl,new THREE.MeshStandardMaterial({color:0xcfefff,transparent:true,opacity:.7,emissive:0x7fc8ff,emissiveIntensity:.4}),r||.05,h,r||.05,x,y+h/2,z,false);g.add(j);FANIM.push({o:j,k:'jet',h,y});return j}
@@ -1188,7 +1234,7 @@ function update(dt){
  MAPLIST.forEach(m=>m.WOOD.forEach((w,i)=>{const id=m.id+'_w'+i;S.wood[id]=Math.min(8,(S.wood[id]??8)+dt*.05)}));
  const wk=S.workers*1.2*TOOLS[S.tools][1]*dt,live=S.mach.filter(m=>!m.br);if(wk>0){const open=live.filter(m=>m.buf<M[m.t].cap);open.forEach(m=>{m.buf+=Math.min(wk/open.length,M[m.t].cap-m.buf)})}
  if(S.silo>0){live.forEach(m=>{const take=Math.min(S.silo,M[m.t].cap-m.buf,30*dt);m.buf+=take;S.silo-=take})}
- S.mach.forEach(m=>{if(m.br){m.on=false;if(S.meca){m.brT=(m.brT||0)+dt;if(m.brT>15){const rq=REPAIR[m.t];if(hasMat(rq)){payMat(rq);news('Le mécanicien a réparé '+d0(m.t)+' avec tes matériaux')}else{const c=cc(Object.entries(rq).reduce((a,[k,v])=>a+MATN[k][3]*v,0)*3*(1+tierOf()));S.E-=c;news('Le mécanicien a réparé '+d0(m.t)+' en achetant les pièces (-'+usd(c)+')')}m.br=0;m.brT=0;m.rp=0;sfx('buy')}}return}const d=M[m.t],use=Math.min(m.buf,d.rate*dt);m.buf-=use;S.stock+=use*d.yld;m.on=use>0;
+ S.mach.forEach(m=>{if(m.br){m.on=false;if(S.meca){const jh=joHere();if(!jh||JO.wk===m)m.brT=(m.brT||0)+dt*(jh?2.5:1);if(m.brT>15){const rq=REPAIR[m.t];if(hasMat(rq)){payMat(rq);news('Jo a réparé '+d0(m.t)+' avec tes matériaux')}else{const c=cc(Object.entries(rq).reduce((a,[k,v])=>a+MATN[k][3]*v,0)*3*(1+tierOf()));S.E-=c;news('Jo a réparé '+d0(m.t)+' en achetant les pièces (-'+usd(c)+')')}m.br=0;m.brT=0;m.rp=0;sfx('buy')}}return}const d=M[m.t],use=Math.min(m.buf,d.rate*dt);m.buf-=use;S.stock+=use*d.yld;m.on=use>0;
   if(m.on&&S.mach.length>1&&Math.random()<dt/(DAY*.7)){m.br=1;m.brT=0;news('Panne : '+d.name+' ! Va la réparer');sfx('alert')}});
  if(S.auto&&S.stock>=1&&S.shelf<S.shelfCap){const mv=Math.min(S.stock,S.shelfCap-S.shelf,Math.max(5,S.shelfCap*.2)*dt);S.stock-=mv;S.shelf+=mv}
  ALLSTORES.forEach(st=>{if(st.id==='main'||!bizOwned(st))return;const bz=S.biz[st.id],cap=bizCap(st),a=BAUTO[bz.lv.auto||0];if(a&&S.stock>0&&bz.shelf<cap){const mv=Math.min(S.stock,cap-bz.shelf,a*dt);S.stock-=mv;bz.shelf+=mv}
@@ -1776,11 +1822,12 @@ function overlay(t,dt){const g=og;g.clearRect(0,0,VW,VH);
  if(SWING>0){const p0=scr(U(S.px),1.1,U(S.py)),k=1-SWING/.4,a0=S.ang||0;if(p0.ok){const q=scr(U(S.px+Math.sin(a0)*60),1.1,U(S.py+Math.cos(a0)*60));const dir=Math.atan2(q.y-p0.y,q.x-p0.x),R=46*UIZ+20;g.save();g.globalAlpha=Math.sin(k*Math.PI)*.9;g.strokeStyle=gi('sword')>=0?'#ffffff':'#ffe0a0';g.lineCap='round';g.lineWidth=7;g.beginPath();g.arc(p0.x,p0.y,R,dir-1.3+k*.4,dir-1.3+k*2.6);g.stroke();g.lineWidth=3;g.strokeStyle='#7fe3ff';g.beginPath();g.arc(p0.x,p0.y,R+7,dir-1.1+k*.5,dir-1.1+k*2.4);g.stroke();g.restore()}}
  if(FISH){const p=scr(U(S.px+70),.15+Math.sin(t/200)*.05,U(S.py));if(p.ok){circ(g,p.x,p.y,7,'#fff');circ(g,p.x,p.y-3,4,'#ff3a5a');if(FISH.st==='bite')bubble(g,p.x,p.y-14,'!','#f6d77c')}}
  if(MINE){MINE.lv.mons.forEach(m=>{if(m.hp<=0)return;const p=scr(m.x/T,m.ty==='golem'||m.ty==='spectre'?2.3:1.2,m.y/T);if(!p.ok)return;if(Math.hypot(m.x-S.px,m.y-S.py)<260){g.font='800 12px Nunito,sans-serif';g.textAlign='center';g.fillStyle='#ffd0d8';g.fillText(m.n,p.x,p.y-10);g.textAlign='start'}rr(g,p.x-18,p.y-4,36,7,3,'rgba(26,6,18,.85)');rr(g,p.x-17,p.y-3,34*Math.max(0,m.hp/m.max),5,2,'#ff5c93')});MINE.lv.nodes.forEach(n=>{if(n.hp<=0||n.hp>=n.max)return;const p=scr(n.x/T,1.2,n.y/T);if(!p.ok)return;rr(g,p.x-18,p.y-4,36,8,4,'rgba(26,6,18,.85)');rr(g,p.x-17,p.y-3,34*n.hp/n.max,6,3,'#f6d77c')});const v=Math.max(0,1-Math.min(25,lampLeft())/25);if(v>0){g.fillStyle=`rgba(0,0,0,${v*.6})`;g.fillRect(0,0,VW,VH)}}
- else{if(MP.id==='home')S.mach.forEach(m=>{const p=scr(U(PX)+m.tx+.5,1.55,U(PY)+m.ty+.5);if(!p.ok)return;if(m.br){bubble(g,p.x,p.y-6,S.meca?'Mécanicien : '+Math.max(0,Math.ceil(15-(m.brT||0)))+' s':'En panne !',S.meca?'#ffe0a0':'#ff8fa8');return}const f=m.buf/M[m.t].cap;rr(g,p.x-18,p.y-4,36,8,4,'rgba(26,6,18,.85)');rr(g,p.x-17,p.y-3,34*f,6,3,m.on?'#7ddc6a':'#ff5c93')});
+ else{if(MP.id==='home')S.mach.forEach(m=>{const p=scr(U(PX)+m.tx+.5,1.55,U(PY)+m.ty+.5);if(!p.ok)return;if(m.br){bubble(g,p.x,p.y-6,S.meca?(joHere()&&JO.wk!==m?'Jo arrive…':'Jo répare : '+Math.max(0,Math.ceil((15-(m.brT||0))/(joHere()?2.5:1)))+' s'):'En panne !',S.meca?'#ffe0a0':'#ff8fa8');return}const f=m.buf/M[m.t].cap;rr(g,p.x-18,p.y-4,36,8,4,'rgba(26,6,18,.85)');rr(g,p.x-17,p.y-3,34*f,6,3,m.on?'#7ddc6a':'#ff5c93')});
   NPC.forEach(n=>{if(!n.mood||n.st==='shop')return;const p=scr(U(n.x),2.1,U(n.y));if(p.ok)bubble(g,p.x,p.y,n.mood,n.sad?'#ffd0d8':'#fff')});
   ANIM.forEach(a=>{const p=scr(U(a.x),a.k==='yeti'?2.6:1.7,U(a.y));if(!p.ok)return;if(a.bub)bubble(g,p.x,p.y,a.bub,a.var==='day'?'#ffe0a0':'#3a0f29',a.var==='day'?'#24091a':'#ff8fa8');if(a.st!=='flee'&&a.hpMax>1){rr(g,p.x-16,p.y+12,32,6,3,'rgba(26,6,18,.85)');rr(g,p.x-15,p.y+13,30*Math.max(0,a.hp/a.hpMax),4,2,'#ff5c93')}});
   SRC.forEach(s=>{if(s.map!==MP.id)return;const hp=cropHp(s);if(hp>=99.5||Math.abs(s.x-S.px)>1100||Math.abs(s.y-S.py)>800)return;const p=scr(U(s.x),1.9,U(s.y));if(!p.ok)return;rr(g,p.x-18,p.y-4,36,7,3,'rgba(26,6,18,.85)');rr(g,p.x-17,p.y-3,34*hp/100,5,2,hp>60?'#7ddc6a':hp>30?'#f6c432':'#ff5c93')});
   CHARM.forEach(({c,map})=>{if(map!==MP.id)return;const dx=U(S.px)-c.x,dz=U(S.py)-c.y;if(dx*dx+dz*dz>16)return;const p=scr(c.x,2.9,c.y);if(p.ok)bubble(g,p.x,p.y,c.id==='peche'?FISHER.txt:c.talk[Math.floor(t/5000)%c.talk.length],'#ffffff')});
+   if(MP===HOME&&JO&&JO.say){const dx=U(S.px-JO.x),dz=U(S.py-JO.y);if(dx*dx+dz*dz<40){const p=scr(U(JO.x),2.75,U(JO.y));if(p.ok)bubble(g,p.x,p.y,JO.say,'#e6f0ff')}}
    if(MP===HOME&&BOT&&BOT.say&&S.bota){const dx=U(S.px-BOT.x),dz=U(S.py-BOT.y);if(dx*dx+dz*dz<40){const p=scr(U(BOT.x),2.6,U(BOT.y));if(p.ok)bubble(g,p.x,p.y,BOT.say,'#e8ffe8')}}
    if(MP===HOME)PLZN.forEach(n=>{if(!n.say)return;const dx=U(S.px-n.x),dz=U(S.py-n.y);if(dx*dx+dz*dz>90)return;const p=scr(U(n.x),2.5,U(n.y));if(p.ok)bubble(g,p.x,p.y,n.say,'#fff7e6')})}
  Object.values(coAv).forEach(a=>{if(!a.say)return;const p=scr(U(a.x),2.9,U(a.y));if(p.ok)bubble(g,p.x,p.y,a.say,'#7fe3ff')});
@@ -2006,7 +2053,7 @@ function makeSeaMon(k){const g=new THREE.Group();
 function seaAlive(){return SEAMON.filter(o=>o.hp>0&&!o.gone)}
 function hitSea(o,dmg){if(!o||o.hp<=0)return;o.hp-=dmg;o.hitT=.25;sfx('shoo');pop(o.x,o.y,o.hp<=0?'Vaincu !':'-'+Math.round(dmg),'#fbeedd',8,'#fff');
  if(o.hp<=0){const rw=cc(Math.round(o.rw*(1+tierOf()*.6)));S.E+=rw;coinBurst(o.x,o.y,10);pop(o.x,o.y-40,'+'+usd(rw),'#f6d77c',20,'#f6d77c');banner(SEAK[o.k].n+' vaincu !','+'+usd(rw));sfx('fanfare');S.stats.monsters=(S.stats.monsters||0)+1;o.gone=2}}
-function updateSea(dt){if(HOME.group&&!HOME.plazas)buildPlazas();if(HOME.group&&!HOME.fnts)buildFountains();if(MP===HOME&&!MINE)fountTick(dt);if(HOME.group&&!BOT)makeBotanist();botTick(dt);seasonTick(dt);if(MP===HOME&&!MINE)plazaTick(dt);if(HOME.group&&!HOME.fstand){HOME.fstand=makeFishStand();HOME.group.add(HOME.fstand)}const on=!MINE&&MP===HOME&&HOME.sea;FSH.forEach(f=>f.m.visible=on);SEAMON.forEach(o=>{if(o.g)o.g.visible=on});if(!on)return;const sx=HOME.sea*T,tt=performance.now()/1000;
+function updateSea(dt){if(HOME.group&&!HOME.plazas)buildPlazas();if(HOME.group&&!HOME.fnts)buildFountains();if(MP===HOME&&!MINE)fountTick(dt);if(HOME.group&&!BOT)makeBotanist();botTick(dt);if(HOME.group&&!JO)makeJo();joTick(dt);seasonTick(dt);if(MP===HOME&&!MINE)plazaTick(dt);if(HOME.group&&!HOME.fstand){HOME.fstand=makeFishStand();HOME.group.add(HOME.fstand)}const on=!MINE&&MP===HOME&&HOME.sea;FSH.forEach(f=>f.m.visible=on);SEAMON.forEach(o=>{if(o.g)o.g.visible=on});if(!on)return;const sx=HOME.sea*T,tt=performance.now()/1000;
  if(!FSH.length)for(let i=0;i<16;i++){const m=makeFishShadow();seaGrp().add(m);const f={m,x:sx+60+Math.random()*420,y:(6+Math.random()*(HOME.HT-12))*T,a:Math.random()*6.3,sp:18+Math.random()*22,wt:0};FSH.push(f)}
  fisherTick(dt);FSH.forEach(f=>{f.wt-=dt;let tx=f.tx,ty=f.ty;if(FISH&&FISH.st!=='bite'&&Math.hypot(FISH.x-f.x,FISH.y-f.y)<150){tx=FISH.x;ty=FISH.y}else if(FISHER.pred&&FSH.indexOf(f)%2===0){tx=FISHER.pred.x+30+Math.sin(f.sp)*40;ty=FISHER.pred.y+Math.cos(f.sp*2)*40}else if(f.wt<=0||tx==null){f.wt=3+Math.random()*5;f.tx=Math.max(sx+40,Math.min(sx+520,f.x+(Math.random()-.5)*260));f.ty=Math.max(4*T,Math.min((HOME.HT-4)*T,f.y+(Math.random()-.5)*260));tx=f.tx;ty=f.ty}
   const dx=tx-f.x,dy=ty-f.y,d=Math.hypot(dx,dy);if(d>6){f.a=Math.atan2(dy,dx);f.x+=dx/d*f.sp*dt;f.y+=dy/d*f.sp*dt}f.m.position.set(U(f.x),.09,U(f.y));f.m.rotation.z=-f.a+Math.sin(tt*6+f.sp)*.12});
@@ -2050,7 +2097,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-42';
+const GAME_VERSION='web-43';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
