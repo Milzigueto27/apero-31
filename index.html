@@ -805,48 +805,108 @@ function botTick(dt){if(!S)return;if(!S.bota){if(BOT){BOT.g.position.set(BOTH.x,
  BOT.g.position.set(U(BOT.x),0,U(BOT.y));animPerson(BOT.p,mv,BOT.step,dt)}
 /* ---- Jo le mécano (garage + réparations) ---- */
 const JOG={x:36,y:51.8},JOH={x:JOG.x-3.2,y:JOG.y+3.1},JOC=2800,
-JOSAY=['Une clé de 12 et tout repart !','J’ai pas de muscles, mais j’ai du doigté.','Ça grince ? Un coup de graisse et c’est réglé.','Tes machines, je les connais par cœur… enfin, par os.','Le bus ? Encore le carbu, je parie.','Toujours un boulon qui traîne quelque part.','Je bosse jour et nuit, je dors jamais de toute façon.','Un vrai mécano répare, il remplace pas !','Si ça tourne, je touche pas. Si ça tourne pas, j’arrive.','J’ai les mains dans le cambouis jusqu’aux phalanges.','Mes boucles blondes ? 100 % naturelles, merci.','Rien ne résiste à ma ceinture à outils.','Cette vieille voiture, je la finirai un jour…','Un squelette mécano, ça rouille pas !'],
-JOHIRE=['Une machine en panne ? Engage-moi, je répare tout !','Je cherche du boulot, j’ai toutes mes clés.','Jo le mécano, pour vous servir !','Je répare même le bus, tu sais.','Pas cher pour un squelette qui bosse 24 h/24 !','Tes machines tombent en panne ? Moi je cours !'];
+JOSAY=['Une clé de 12 et tout repart !','J’ai pas de muscles, mais j’ai du doigté.','Ça grince ? Un coup de graisse et c’est réglé.','Tes machines, je les connais par cœur… enfin, par os.','Toujours un boulon qui traîne quelque part.','Je bosse jour et nuit, je dors jamais de toute façon.','Un vrai mécano répare, il remplace pas !','Si ça tourne, je touche pas. Si ça tourne pas, j’arrive.','J’ai les mains dans le cambouis jusqu’aux phalanges.','Mes boucles blondes ? 100 % naturelles, merci.','Rien ne résiste à ma ceinture à outils.','Un squelette mécano, ça rouille pas !'],
+JOHIRE=['Une machine en panne ? Engage-moi, je répare tout !','Je cherche du boulot, j’ai toutes mes clés.','Jo le mécano, pour vous servir !','Je répare même le bus, tu sais.','Pas cher pour un squelette qui bosse 24 h/24 !'],
+// tâches du garage : position locale (x,z), direction du regard locale, animation, chemin depuis l'entrée, phrases
+JOTASK=[
+ {n:'moteur',p:[1.3,.5],f:[-1,0],a:'work',v:[[1.15,-.55]],t:['Ce moteur va ronronner comme un chaton.','Allez, encore une bougie à changer…','Qui a mis du sable dans ce carbu ?!']},
+ {n:'roue',p:[.3,-.8],f:[0,1],a:'kneel',v:[],t:['Allez, on change cette roue.','Cric en place, roue dévissée, nickel.','Elle était à plat depuis 1987, celle-là.']},
+ {n:'moto',p:[2.1,-.55],f:[0,-1],a:'kneel',v:[[1.15,-.55]],t:['Cette bécane, je la remets en route.','Chaîne détendue, je resserre.','Un jour je l’emmène faire un tour… sans les mains !']},
+ {n:'bloc',p:[2.45,-.05],f:[0,1],a:'work',v:[[1.15,-.55]],t:['Je refais le joint de culasse.','Ce bloc moteur, c’est du costaud.','Un piston, deux pistons… il en manque un !']},
+ {n:'outils',p:[1.3,1.55],f:[0,1],a:'idle',v:[[1.15,-.55],[1.3,.5]],t:['Où j’ai mis ma clé de 13…','Chaque outil à sa place, c’est la règle.','Tiens, mon tournevis préféré !']},
+ {n:'soudure',p:[-2.45,1.05],f:[0,1],a:'work',v:[[-2.45,-.6]],t:['Attention les yeux, je soude !','Un petit point de soudure et ça tient.','Ça chauffe, ça crépite, j’adore.']},
+ {n:'etabli',p:[3.2,-3.1],f:[1,0],a:'work',v:[[0,-2.9]],out:1,t:['Je bricole une petite pièce à l’établi.','Le moteur de tondeuse, je le finis.','Un coup de lime et c’est parfait.']},
+ {n:'pneus',p:[-3.1,-2.85],f:[-1,0],a:'kneel',v:[[0,-2.9]],out:1,t:['Celui-là est crevé…','Je trie les pneus, les bons et les ratés.','Pression, usure… celui-là part à la casse.']},
+ {n:'pause',p:[-1.4,-3.4],f:[0,-1],a:'idle',v:[[0,-2.9]],out:1,t:['Petite pause, même les squelettes fatiguent.','Un café ? Ça me passe à travers, mais j’aime l’odeur.','Belle journée pour réparer des trucs.']}],
+JOHUB=[0,-1.7];
 let JO=null;
-function joSolid(tx,ty){return(tx>JOG.x-3.15&&tx<JOG.x+3.15&&ty>JOG.y-2.4&&ty<JOG.y+1.2)||(tx>JOG.x-5&&tx<JOG.x-3.6&&ty>JOG.y+2.75&&ty<JOG.y+3.45)||((tx-JOG.x-3.8)**2+(ty-JOG.y-2.4)**2<.5)||((tx-JOG.x-3.75)**2+(ty-JOG.y-1.2)**2<.25)}
-function makeJoGarage(){const h=new THREE.Group(),cw=tmat(0xe2d6c2),dk=tmat(0x3a3a42),rf=tmat(0x2f5a8a),wd=tmat(0x8a5a32),rd=tmat(0xd9472b),bk=tmat(0x1c1c1c),gr=tmat(0x9a9aa2),ye=tmat(0xf6c445);
+const joW=(lx,lz)=>({x:(JOG.x-lx)*T,y:(JOG.y-lz)*T});
+function joSolid(tx,ty){const x=tx-JOG.x,y=ty-JOG.y;
+ if(x>-3.15&&x<3.15&&y>-2.45&&y<-1.95)return true; // mur du fond
+ if(Math.abs(x)>2.85&&Math.abs(x)<3.15&&y>-2.45&&y<2.3)return true; // murs des côtés
+ if(x>-.8&&x<1.95&&y>-1.15&&y<.15)return true; // voiture
+ if(x>-2.7&&x<-.5&&y>-2.15&&y<-1.6)return true; // établi intérieur
+ if(x>-2.85&&x<-1.35&&y>1.1&&y<1.55)return true; // moto
+ if(x>-2.75&&x<-2.15&&y>-.8&&y<-.2)return true; // bloc moteur
+ if(x>1.95&&x<2.95&&y>-2.15&&y<-1.45)return true; // table de soudure
+ if(x>-5&&x<-3.6&&y>2.75&&y<3.45)return true; // établi
+ if((x-3.8)**2+(y-2.4)**2<.5||(x-3.75)**2+(y-1.2)**2<.25||(x-3.6)**2+(y-3.2)**2<.2||(x-4.1)**2+(y-3.3)**2<.2)return true;return false}
+function makeJoGarage(){const h=new THREE.Group(),cw=tmat(0xe2d6c2),dk=tmat(0x3a3a42),rf=tmat(0x2f5a8a),wd=tmat(0x8a5a32),rd=tmat(0xd9472b),bk=tmat(0x1c1c1c),gr=tmat(0x9a9aa2),ye=tmat(0xf6c445),oil=tmat(0x16161a),bl=tmat(0x2f6fb0),roof=[];
  h.add(box(tmat(0x8f8f8f),6.6,.08,5,0,.04,0));h.add(box(tmat(0x6a6a6a),5.6,.09,.9,0,.045,-2.8));
- h.add(box(cw,6,2.6,.2,0,1.3,2.2));[-1,1].forEach(s=>h.add(box(cw,.2,2.6,4.4,s*3,1.3,0)));h.add(box(cw,6.2,.6,.2,0,2.3,-2.2));
- h.add(box(gr,5.6,.36,.12,0,1.82,-2.13));for(let i=0;i<3;i++)h.add(box(dk,5.6,.025,.13,0,1.69+i*.12,-2.14));
+ h.add(box(cw,6,2.6,.2,0,1.3,2.2));[-1,1].forEach(s=>h.add(box(cw,.2,2.6,4.4,s*3,1.3,0)));
+ const lin=box(cw,6.2,.6,.2,0,2.3,-2.2);h.add(lin);roof.push(lin);
+ const sh=new THREE.Group();sh.add(box(gr,5.6,.36,.12,0,1.82,-2.13));for(let i=0;i<3;i++)sh.add(box(dk,5.6,.025,.13,0,1.69+i*.12,-2.14));h.add(sh);roof.push(sh);
  [-1,1].forEach(s=>{for(let i=0;i<5;i++)h.add(box(i%2?bk:ye,.13,.4,.13,s*2.86,.2+i*.4,-2.24))});
- h.add(box(rf,6.9,.18,5.3,0,2.68,0));h.add(box(tmat(0x244a72),6.9,.3,.1,0,2.55,-2.62));
- const sg=label('Garage de Jo',{size:.4,bg:'rgba(40,70,120,.95)'});sg.position.set(0,3.2,-2.3);h.add(sg);
- // vieille voiture capot ouvert
+ const r1=box(rf,6.9,.18,5.3,0,2.68,0),r2=box(tmat(0x244a72),6.9,.3,.1,0,2.55,-2.62);h.add(r1,r2);roof.push(r1,r2);
+ const sg=label('Garage de Jo',{size:.4,bg:'rgba(40,70,120,.95)'});sg.position.set(0,3.2,-2.3);h.add(sg);roof.push(sg);
+ // lampes au plafond (restent visibles)
+ [-1.3,1.3].forEach(x=>{h.add(box(dk,.05,.5,.05,x,2.3,.4));h.add(box(tmat(0xfff3c4,{emissive:0xfff3c4,emissiveIntensity:.8}),.7,.08,.18,x,2.02,.4))});
+ // marquage au sol + taches d’huile
+ h.add(box(ye,.08,.01,3,-2.1,.09,.5));h.add(box(ye,.08,.01,3,1.1,.09,.5));[[0,.2,.5],[1.6,-.4,.3],[-1,.9,.25]].forEach(([x,z,r])=>h.add(mesh(G.cyl,oil,r,.01,r*.7,x,.09,z,false)));
+ // voiture sur cric, roue avant démontée, capot ouvert
  const car=new THREE.Group();car.add(box(rd,2.7,.55,1.3,0,.58,0));car.add(box(rd,1.4,.5,1.2,-.3,1.1,0));[-1,1].forEach(s=>car.add(box(tmat(0x9ad0ef),1.2,.34,.02,-.3,1.12,s*.61)));car.add(box(tmat(0x9ad0ef),.02,.34,1.05,.41,1.12,0));
- [-.9,.9].forEach(x=>[-.63,.63].forEach(z=>{const w=mesh(G.cyl,bk,.29,.2,.29,x,.3,z);w.rotation.x=Math.PI/2;car.add(w);const c=mesh(G.cyl,gr,.13,.21,.13,x,.3,z);c.rotation.x=Math.PI/2;car.add(c)}));
- const hd=box(rd,.75,.05,1.25,0,0,0);hd.position.set(1.05,1.2,0);hd.rotation.z=1;car.add(hd);car.add(box(dk,.6,.3,.9,1,.95,0));[-1,1].forEach(s=>car.add(box(tmat(0xfff3b0,{emissive:0xfff3b0,emissiveIntensity:.4}),.03,.14,.22,1.36,.68,s*.42)));
- car.position.set(-.5,0,.45);h.add(car);
- // mur à outils + étagère
+ [[-.9,-.63],[-.9,.63],[.9,.63]].forEach(([x,z])=>{const w=mesh(G.cyl,bk,.29,.2,.29,x,.3,z);w.rotation.x=Math.PI/2;car.add(w);const c=mesh(G.cyl,gr,.13,.21,.13,x,.3,z);c.rotation.x=Math.PI/2;car.add(c)});
+ car.add(mesh(G.cyl,dk,.1,.1,.1,.9,.42,-.63));car.add(box(tmat(0xc0392b),.3,.3,.25,.9,.15,-.5));car.add(box(gr,.05,.12,.05,.9,.35,-.5));
+ const hd=box(rd,.75,.05,1.25,0,0,0);hd.position.set(1.05,1.2,0);hd.rotation.z=1;car.add(hd);car.add(box(dk,.6,.3,.9,1,.95,0));car.add(mesh(G.cyl,gr,.08,.25,.08,.85,1.15,.2));car.add(mesh(G.cyl,tmat(0x3a8a4a),.06,.2,.06,1.05,1.1,-.25));
+ [-1,1].forEach(s=>car.add(box(tmat(0xfff3b0,{emissive:0xfff3b0,emissiveIntensity:.4}),.03,.14,.22,1.36,.68,s*.42)));
+ car.position.set(-.6,.06,.5);car.rotation.z=-.03;h.add(car);
+ const wl=mesh(G.cyl,bk,.29,.2,.29,.9,.11,-1.45);h.add(wl);h.add(mesh(G.cyl,gr,.13,.21,.13,.9,.12,-1.45));
+ h.add(box(tmat(0x2a2a30),.5,.05,1.1,.1,.12,-.35));[-.45,.45].forEach(z=>h.add(mesh(G.cyl,bk,.05,.05,.05,.1,.06,-.35+z)));// planche à roulettes
+ h.add(mesh(G.cyl,tmat(0x404048),.3,.07,.3,.9,.08,.4));// bac de vidange
+ // outils par terre
+ [[.55,-.95,0],[.7,-1.1,1.2],[-.2,-1.2,.4]].forEach(([x,z,r])=>{const t=box(gr,.35,.03,.05,x,.1,z);t.rotation.y=r;h.add(t)});
+ const tb=new THREE.Group();tb.add(box(rd,.6,.3,.3,0,.15,0));tb.add(box(tmat(0xa02a1e),.6,.04,.3,0,.42,-.12));tb.children[1].rotation.x=-.9;tb.position.set(.6,.06,-1.75);h.add(tb);
+ // mur à outils + établi intérieur
  h.add(box(wd,2.2,1.1,.06,1.6,1.45,2.07));[[.8,0],[1.2,1],[1.6,0],[2,1],[2.4,0]].forEach(([x,t])=>h.add(t?box(gr,.08,.5,.03,x,1.45,2.02):box(tmat(0xc0392b),.24,.08,.03,x,1.6,2.02)));
- h.add(box(dk,.6,1.4,.4,-2.5,.7,1.8));for(let i=0;i<3;i++)h.add(box(i%2?rd:tmat(0x2f6fb0),.5,.2,.32,-2.5,.35+i*.45,1.75));
- // établi dehors (Jo y bricole)
+ h.add(box(wd,2.2,.08,.55,1.6,.85,1.85));[.6,2.6].forEach(x=>h.add(box(dk,.08,.8,.5,x,.42,1.85)));h.add(box(bl,.35,.25,.3,1.1,1.02,1.8));h.add(mesh(G.cyl,ye,.08,.18,.08,2.1,.98,1.8));
+ // bloc moteur sur chandelle
+ h.add(box(dk,.1,.7,.1,2.45,.35,.5));h.add(box(dk,.5,.06,.5,2.45,.06,.5));h.add(box(tmat(0x5a5a62),.6,.45,.5,2.45,.92,.5));[-.18,0,.18].forEach(x=>h.add(mesh(G.cyl,gr,.07,.12,.07,2.45+x,1.2,.5)));
+ // moto en réparation
+ const mo=new THREE.Group();[-.55,.55].forEach(x=>{const w=mesh(G.torus,bk,.3,.3,.4,x,.32,0);mo.add(w)});mo.add(box(tmat(0x2f9a6a),.8,.25,.22,0,.6,0));mo.add(box(bk,.45,.08,.25,-.2,.78,0));mo.add(box(gr,.08,.4,.08,.5,.75,0));mo.add(box(gr,.05,.05,.6,.55,.95,0));mo.add(box(tmat(0x6a6a72),.3,.25,.2,.05,.38,0));
+ mo.position.set(2.1,.06,-1.3);h.add(mo);h.add(box(gr,.25,.03,.12,1.7,.1,-.85));
+ // poste de soudure
+ h.add(box(dk,.9,.08,.6,-2.45,.8,1.75));[-.38,.38].forEach(x=>h.add(box(dk,.06,.78,.5,-2.45+x,.4,1.75)));h.add(box(gr,.5,.06,.3,-2.45,.87,1.7));h.add(box(tmat(0xd9a020),.3,.45,.3,-2.85,.3,1.2));h.add(mesh(G.cyl,tmat(0x3a7a3a),.12,.8,.12,-2.65,.46,2));
+ const spk=[];for(let i=0;i<14;i++){const p=box(tmat(0xffd27a,{emissive:0xffb040,emissiveIntensity:1}),.04,.04,.04,-2.45,1,1.7);p.visible=false;p.castShadow=false;h.add(p);spk.push({m:p,v:new THREE.Vector3(),t:0})}
+ const fl=box(tmat(0xbfe4ff,{emissive:0xbfe4ff,emissiveIntensity:1.5}),.1,.1,.1,-2.45,.95,1.68);fl.visible=false;h.add(fl);
+ // dehors : établi, pneus, bidon, jerrican
  h.add(box(wd,1.5,.1,.7,4.3,.85,-3.1));[-.65,.65].forEach(o=>[-.28,.28].forEach(z=>h.add(box(dk,.08,.8,.08,4.3+o,.4,-3.1+z))));h.add(box(rd,.5,.28,.26,4.65,1.04,-3.15));h.add(box(gr,.18,.16,.2,3.85,.98,-3.05));
  const eng=new THREE.Group();eng.add(box(tmat(0x4a4a52),.5,.32,.36,0,0,0));eng.add(mesh(G.cyl,gr,.1,.2,.1,0,.24,0));eng.position.set(4.25,1.07,-3.05);h.add(eng);
- // pneus, bidon, jerrican
- for(let i=0;i<3;i++){const t=mesh(G.torus,bk,.34,.34,.5,-3.8,.12+i*.2,-2.4);t.rotation.x=Math.PI/2;h.add(t)}
- h.add(mesh(G.cyl,tmat(0x2f6fb0),.3,.9,.3,-3.75,.45,-1.2));h.add(mesh(G.cyl,tmat(0x24588a),.31,.05,.31,-3.75,.9,-1.2));h.add(box(rd,.3,.42,.16,-3.4,.21,-.6));
- h.position.set(JOG.x,0,JOG.y);h.rotation.y=Math.PI;HOME.group.add(h);return h}
-function makeJo(){makeJoGarage();const g=new THREE.Group();JO={x:JOH.x*T,y:JOH.y*T,g,ready:0,say:'',sayT:2,job:null,wk:null,idleT:5,tink:0,ct:0,step:0};g.position.set(JOH.x,0,JOH.y);HOME.group.add(g);
- const lb=label('Jo le mécano',{size:.36,bg:'rgba(40,70,120,.9)'});lb.position.set(0,2.35,0);g.add(lb);
+ for(let i=0;i<3;i++){const t=mesh(G.torus,bk,.34,.34,.5,-3.8,.12+i*.2,-2.4);t.rotation.x=Math.PI/2;h.add(t)}[-3.6,-4.1].forEach((x,i)=>{const t=mesh(G.torus,bk,.34,.34,.5,x,.36,-3.2-i*.1);t.rotation.y=.4*i;h.add(t)});
+ h.add(mesh(G.cyl,bl,.3,.9,.3,-3.75,.45,-1.2));h.add(mesh(G.cyl,tmat(0x24588a),.31,.05,.31,-3.75,.9,-1.2));h.add(box(rd,.3,.42,.16,-3.4,.21,-.6));
+ h.position.set(JOG.x,0,JOG.y);h.rotation.y=Math.PI;HOME.group.add(h);return{h,roof,spk,fl}}
+function joSlot(){const k=Math.floor(Date.now()/95000),hs=n=>{let x=Math.imul(n,2654435761)>>>0;x=(x^(x>>>15))>>>0;return x%JOTASK.length};let i=hs(k);if(i===hs(k-1))i=(i+1)%JOTASK.length;return i}
+function joRoute(from,to){// from/to : index de tâche ou -1 (dehors/ailleurs)
+ const pts=[],A=from>=0?JOTASK[from]:null,B=JOTASK[to];if(A)A.v.slice().reverse().forEach(p=>pts.push(p));
+ const inA=A&&!A.out,inB=!B.out;if(inA&&!inB)pts.push(JOHUB,[0,-2.9]);else if(!inA&&inB){if(!A||A.out)pts.push([0,-2.9]);pts.push(JOHUB)}else if(inA&&inB)pts.push(JOHUB);
+ B.v.forEach(p=>pts.push(p));pts.push(B.p);return pts.map(p=>joW(p[0],p[1]))}
+function joExit(i){const A=JOTASK[i],pts=A.v.slice().reverse();if(!A.out)pts.push(JOHUB,[0,-2.9]);return pts.map(p=>joW(p[0],p[1]))}
+function makeJo(){const G2=makeJoGarage();const g=new THREE.Group(),t0=JOTASK[6];JO={x:joW(t0.p[0],t0.p[1]).x,y:joW(t0.p[0],t0.p[1]).y,g,ready:0,say:'',sayT:2,job:null,wk:null,ct:0,step:0,gar:G2,task:6,path:[],want:-1,away:0};g.position.set(U(JO.x),0,U(JO.y));HOME.group.add(g);
+ const lb=label('Jo le mécano',{size:.36,bg:'rgba(40,70,120,.9)'});lb.position.set(0,2.35,0);g.add(lb);JO.lb=lb;
  gltfReady().then(l=>new Promise((res,rej)=>l.load('jo-le-mecano.glb?v='+GAME_VERSION,res,undefined,rej))).then(gl=>{gl.scene.traverse(n=>{if(n.isMesh){n.castShadow=true;n.frustumCulled=false;const m=n.material;if(m.map)m.map.encoding=THREE.LinearEncoding;n.material=new THREE.MeshToonMaterial({map:m.map||null,color:m.map?0xffffff:0xdddddd,gradientMap:TG,skinning:!!n.isSkinnedMesh,side:THREE.DoubleSide})}});
   gl.scene.updateMatrixWorld(true);const bb=boneBox(gl.scene),hh=bb.max.y-bb.min.y,sc=1.7/hh;const m=gl.scene;m.scale.setScalar(sc);m.position.y=-bb.min.y*sc;g.add(m);
   const mixer=new THREE.AnimationMixer(m),acts={};gl.animations.forEach(c=>{c.tracks.forEach(t=>{if(/Hips\.position$/.test(t.name)&&/walk|run/.test(c.name)){const v=t.values,n=v.length/3;if(n>1)[0,2].forEach(k=>{const d=v[(n-1)*3+k]-v[k];for(let i=0;i<n;i++)v[i*3+k]-=d*i/(n-1)})}});acts[c.name]=mixer.clipAction(c)});
   JO.u={anim:{mixer,acts,cur:null,once:null,onceT:0}};JO.ready=1;playAnim(JO.u,'idle')}).catch(()=>{const p=makePerson({shirt:0x2f5a8a,pants:0x2f5a8a,skin:0xeeeae0,hair:0xf2d16b,style:'short',apron:1});g.add(p);JO.p=p;JO.ready=2})}
 function joJob(){if(!S.meca)return null;const b=S.mach.find(m=>m.br);if(b)return{k:'m',m:b,x:PX+b.tx*T+T/2,y:PY+b.ty*T+T/2+34};if(S.busBr&&!S.busBr.tow)return{k:'b',x:S.busBr.x+30,y:11.55*T+44};return null}
 function joHere(){return!!(JO&&JO.ready&&MP===HOME&&!MINE)}
+function joSparks(dt,on){const G2=JO.gar;G2.fl.visible=on&&Math.random()<.6;G2.spk.forEach(s=>{if(s.t<=0){if(!on){s.m.visible=false;return}if(Math.random()<dt*14){s.t=.35+Math.random()*.4;s.m.position.set(-2.45,.95,1.68);s.v.set((Math.random()-.5)*2.4,1+Math.random()*1.6,(Math.random()-.5)*2.4-.6);s.m.visible=true}else return}s.t-=dt;s.v.y-=6*dt;s.m.position.addScaledVector(s.v,dt);if(s.m.position.y<.1){s.m.position.y=.1;s.v.set(0,0,0)}if(s.t<=0)s.m.visible=false})}
 function joTick(dt){if(!JO)return;JO.wk=null;if(MP!==HOME||MINE)return;
- JO.sayT-=dt;if(JO.sayT<=0){JO.sayT=8+Math.random()*6;JO.say=pick(S.meca?JOSAY:JOHIRE)}
- const J=JO.job;if(!J||J.done||(J.k==='m'&&(!J.m.br||S.mach.indexOf(J.m)<0))||(J.k==='b'&&!S.busBr))JO.job=joJob();
- const j=JO.job,tx=j?j.x:JOH.x*T,ty=j?j.y:JOH.y*T,dx=tx-JO.x,dy=ty-JO.y,d=Math.hypot(dx,dy);let an='idle',ts=1,mv=false;
- if(d>10){const run=d>300,sp=run?170:70,st=Math.min(sp*dt,d);JO.x+=dx/d*st;JO.y+=dy/d*st;JO.g.rotation.y=Math.atan2(dx,dy);an=run?'run':'walk';mv=true;JO.step+=dt*(run?14:9)}
+ // toit transparent quand tu es dans le garage
+ const px=S.px/T-JOG.x,py=S.py/T-JOG.y,inG=Math.abs(px)<3.3&&py>-2.6&&py<2.5;JO.gar.roof.forEach(r=>r.visible=!inG);
+ JO.sayT-=dt;
+ const J=JO.job;if(!J||J.done||(J.k==='m'&&(!J.m.br||S.mach.indexOf(J.m)<0))||(J.k==='b'&&!S.busBr)){const nj=joJob();if(nj&&!J){JO.path=JO.task>=0&&!JO.away?joExit(JO.task):[];JO.away=1;JO.task=-1;JO.want=-1;JO.sayT=0}JO.job=nj}
+ const j=JO.job;let an='idle',mv=false,tx,ty,face=null,ts=1;
+ if(j){if(JO.path.length){tx=JO.path[0].x;ty=JO.path[0].y}else{tx=j.x;ty=j.y}}
+ else{const want=joSlot();if(!JO.path.length&&(want!==JO.want||JO.task<0)){if(want!==JO.task){JO.path=joRoute(JO.away?-1:JO.task,want);JO.task=want;JO.away=0;JO.sayT=0}JO.want=want}
+  const tk=JOTASK[JO.task];if(JO.path.length){tx=JO.path[0].x;ty=JO.path[0].y}else{const w=joW(tk.p[0],tk.p[1]);tx=w.x;ty=w.y;face=Math.atan2(-tk.f[0],-tk.f[1])}}
+ if(JO.sayT<=0){JO.sayT=9+Math.random()*6;JO.say=j?pick(['J’arrive, j’arrive !','Une panne ? Pas de panique !','Jo s’en occupe !']):S.meca&&Math.random()<.35?pick(JOSAY):JO.task>=0&&Math.random()<.75?pick(JOTASK[JO.task].t):pick(S.meca?JOSAY:JOHIRE)}
+ const dx=tx-JO.x,dy=ty-JO.y,d=Math.hypot(dx,dy);
+ if(d>6){const run=j&&d>300,sp=run?170:70,st=Math.min(sp*dt,d);JO.x+=dx/d*st;JO.y+=dy/d*st;JO.g.rotation.y=Math.atan2(dx,dy);an=run?'run':'walk';mv=true;JO.step+=dt*(run?14:9)}
+ else if(JO.path.length){JO.path.shift()}
  else if(j){JO.g.rotation.y=Math.PI;an=j.k==='b'?'kneel':'work';JO.ct-=dt;if(JO.ct<=0){JO.ct=1.4;pop(JO.x,JO.y-60,pick(['Clang !','Tac tac','Vrrr…','Bonk !']),'#e8f0f8',6,'#b8b8c0');if(Math.random()<.5)sfx('mine')}
   if(j.k==='m')JO.wk=j.m;else{j.t=(j.t||0)+dt;if(j.t>8&&S.busBr){S.busBr=null;j.done=1;pop(JO.x,JO.y-40,'Bus réparé par Jo !','#7ddc6a',16,'#fff');news('Jo a réparé le bus, il repart !');sfx('buy')}}}
- else{JO.g.rotation.y=-Math.PI/2;JO.idleT-=dt;if(JO.idleT<=0){JO.tink=!JO.tink;JO.idleT=JO.tink?7+Math.random()*5:4+Math.random()*4}an=JO.tink?'work':'idle'}
+ else{const tk=JOTASK[JO.task];an=tk.a;if(face!=null){let r=face-JO.g.rotation.y;r=Math.atan2(Math.sin(r),Math.cos(r));JO.g.rotation.y+=r*Math.min(1,dt*6)}
+  if(tk.a==='idle'&&tk.n==='outils'&&Math.sin(performance.now()/1700)>.4)an='work'}
+ joSparks(dt,!j&&!mv&&!JO.path.length&&JO.task>=0&&JOTASK[JO.task].n==='soudure');
  JO.g.position.set(U(JO.x),0,U(JO.y));
  if(JO.ready===1){const A=JO.u.anim;if(A.cur!==an)playAnim(JO.u,an);const a=A.acts[an];if(a)a.timeScale=ts;A.mixer.update(dt)}else if(JO.p)animPerson(JO.p,mv,JO.step,dt)}
 /* ---- la boutique de Rosie ---- */
@@ -2097,7 +2157,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-43';
+const GAME_VERSION='web-44';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
