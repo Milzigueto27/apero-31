@@ -220,16 +220,18 @@ input[type=text]{font:800 16px Nunito;min-height:46px;padding:8px 12px;border-ra
     <div class="row"><button class="btn" data-imp="0">Emplacement 1</button><button class="btn" data-imp="1">Emplacement 2</button><button class="btn" data-imp="2">Emplacement 3</button><button class="btn ghost" id="importClose">Annuler</button></div>
   </div></div>
   </div>
-  <div id="err"><div class="box"><h2>Oups</h2><p>La 3D n'a pas pu démarrer sur cet appareil (WebGL indisponible ou bibliothèque non chargée). Recharge la page.</p></div></div>
+  <div id="err"><div class="box"><h2>Oups</h2><p>La 3D n'a pas pu démarrer sur cet appareil. Ferme cet onglet, ouvre-en un nouveau et remets le lien (sur iPhone : essaie aussi dans Safari). Si ça bloque encore, redémarre le téléphone.</p><p id="errWhy" style="font-size:12px;opacity:.7"></p></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>')</script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script>
 {
 const $=id=>document.getElementById(id);
-if(!window.THREE){$('err').style.display='grid';throw new Error('no three')}
+if(!window.THREE){$('errWhy').textContent='Détail : bibliothèque 3D non téléchargée (réseau).';$('err').style.display='grid';throw new Error('no three')}
 const TOUCH=('ontouchstart' in window)||navigator.maxTouchPoints>0;
 const PHONE=Math.min(screen.width,screen.height)<600;
 const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -1219,9 +1221,11 @@ function hud(dt){hudT-=dt;if(hudT>0)return;hudT=.1;const t=tierOf(),h=hourOf();
 function banner(t,s){$('banT').textContent=t;$('banS').textContent=s||'';const b=$('banner');b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),2600);confetti(60)}
 function unlockAch(id){if(!S||S.ach[id])return;S.ach[id]=1;const a=ACH.find(x=>x[0]===id);$('achT').textContent='Succès : '+a[1];$('achS').textContent=a[2];const e=$('ach');e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),3500);sfx('mission')}
 /* ================= 3D ================= */
-const glc=$('gl'),ov=$('ov'),og=ov.getContext('2d'),mini=$('mini'),mg=mini.getContext('2d');
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:glc,antialias:true,powerPreference:'high-performance'})}catch(e){$('err').style.display='grid';throw e}
-let QL=aPrefs.q>=0?aPrefs.q:2;
+let glc=$('gl');const ov=$('ov'),og=ov.getContext('2d'),mini=$('mini'),mg=mini.getContext('2d');
+let renderer,GLFB=0;{const why=[];if(!window.THREE)why.push('bibliothèque 3D non téléchargée');else for(const o of [{antialias:true,powerPreference:'high-performance'},{antialias:false},{antialias:false,powerPreference:'low-power',failIfMajorPerformanceCaveat:false,precision:'mediump'}]){try{renderer=new THREE.WebGLRenderer(Object.assign({canvas:glc},o));break}catch(e){why.push(String(e&&e.message||e).slice(0,80));GLFB++;const c=glc.cloneNode(false);glc.parentNode.replaceChild(c,glc);glc=c}}
+if(!renderer){$('errWhy').textContent='Détail : '+why.join(' / ');$('err').style.display='grid';throw new Error('WebGL KO')}}
+glc.addEventListener('webglcontextlost',e=>{e.preventDefault();$('errWhy').textContent='La 3D a planté (mémoire du téléphone). Recharge la page, et dans Menu → Graphismes choisis « Rapide ».';$('err').style.display='grid'});
+let QL=aPrefs.q>=0?aPrefs.q:(GLFB?0:2);
 renderer.shadowMap.enabled=QL>0;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x9fd8ff,40,85);
 const camera=new THREE.PerspectiveCamera(42,1,.5,220);
@@ -2046,7 +2050,7 @@ let ROOM=null,CO=null,coPeers=[],coAv={},coSay=null,coT=0,coErr='',FBUID=null,FA
 const COLS=['#ff5c93','#7fe3ff','#7ddc6a','#f6d77c','#b07ae0','#ff8a4a','#ffffff','#4a7ac0','#1a1a1a'];
 let coName='',coCol=COLS[Math.floor(Math.random()*COLS.length)];
 try{const c=JSON.parse(lsGet('om8_coop')||'{}');coName=c.n||'';if(c.c)coCol=c.c}catch(e){}
-const GAME_VERSION='web-41';
+const GAME_VERSION='web-42';
 const FB_CONFIG={apiKey:"AIzaSyCa-lJfUZd-7EvIRdTbAZDJ8JlAXDUnyD4",authDomain:"apero-31.firebaseapp.com",databaseURL:"https://apero-31-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apero-31",storageBucket:"apero-31.firebasestorage.app",messagingSenderId:"913418439765",appId:"1:913418439765:web:5db71263cd1af657fbd8dc"};
 const FBDB=()=>window.firebase&&firebase.apps&&firebase.apps.length?firebase.database():null;
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
